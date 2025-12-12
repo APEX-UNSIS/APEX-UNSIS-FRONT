@@ -1,0 +1,234 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #1E3A8A;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+.login-card {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  padding: 40px;
+  width: 100%;
+  max-width: 800px;
+  min-height: 500px;
+}
+
+.login-content {
+  display: flex;
+  height: 100%;
+  gap: 40px;
+}
+
+/* Columna izquierda - Formulario */
+.left-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 2px solid #E2E8F0;
+  padding-right: 40px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.unsis-image {
+  max-width: 120px;
+  max-height: 80px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 15px;
+}
+
+.institution-name {
+  color: #1E3A8A;
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.form-group {
+  text-align: left;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #2D3748;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #E2E8F0;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  background-color: #F7FAFC;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #1E3A8A;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+}
+
+.form-input::placeholder {
+  color: #A0AEC0;
+  font-size: 0.9rem;
+}
+
+.form-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0 20px 0;
+}
+
+.forgot-password {
+  color: #1E3A8A;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+  color: #1E40AF;
+  text-decoration: underline;
+}
+
+.register-link {
+  color: #1E3A8A;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.register-link:hover {
+  color: #1E40AF;
+  text-decoration: underline;
+}
+
+.login-button {
+  background-color: #1E3A8A;
+  color: white;
+  border: none;
+  padding: 16px 30px;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.login-button:hover {
+  background-color: #1E40AF;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(30, 58, 138, 0.3);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+/* Columna derecha - Imagen APEX */
+.right-column {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.apex-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.apex-image {
+  max-width: 250px;
+  max-height: 200px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .login-content {
+    flex-direction: column;
+    gap: 30px;
+  }
+  
+  .left-column {
+    border-right: none;
+    border-bottom: 2px solid #E2E8F0;
+    padding-right: 0;
+    padding-bottom: 30px;
+  }
+  
+  .apex-image {
+    max-width: 200px;
+    max-height: 150px;
+  }
+  
+  .login-card {
+    padding: 30px 25px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 10px;
+  }
+  
+  .login-card {
+    padding: 25px 20px;
+  }
+  
+  .institution-name {
+    font-size: 1.4rem;
+  }
+  
+  .unsis-image {
+    max-width: 100px;
+    max-height: 70px;
+  }
+  
+  .apex-image {
+    max-width: 150px;
+    max-height: 120px;
+  }
+  
+  .form-links {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
