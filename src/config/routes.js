@@ -1,3 +1,4 @@
+import { HomeIcon, UsersIcon, CalendarIcon, EyeIcon, EditIcon, GraduateIcon, CheckIcon } from '../icons';
 /**
  * Constantes de rutas centralizadas
  * Evita conflictos y facilita el mantenimiento
@@ -27,7 +28,7 @@ export const ROUTES = {
 /**
  * Configuración de rutas por rol
  */
-import { HomeIcon, UsersIcon, CalendarIcon, EyeIcon, EditIcon, GraduateIcon, CheckIcon } from './icons';
+
 
 export const ROUTES_BY_ROLE = {
   admin: [

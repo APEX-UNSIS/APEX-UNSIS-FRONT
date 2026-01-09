@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { EyeIcon, EditIcon, SaveIcon, TrashIcon, LogoutIcon } from '../icons';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../routes';
+import { ROUTES } from '../config/routes';
 import Layout from '../components/Layout';
 import './ModificarCalendario.css';
 

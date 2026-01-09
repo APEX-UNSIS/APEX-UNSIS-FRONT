@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ROUTES, getRoutesByRole } from '../routes';
+import { ROUTES, getRoutesByRole } from '../config/routes';
 import './Dashboard.css';
 import unsisImage from '../assets/images/UNSI.png';
 import { CrownIcon, GraduateIcon, ClipboardIcon, LogoutIcon } from '../icons';

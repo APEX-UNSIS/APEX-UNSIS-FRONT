@@ -425,6 +425,63 @@
   background: #DC2626;
 }
 
+/* Styles for grouped tables in modal */
+.detalle-calendario {
+  margin-top: 20px;
+}
+
+.grupo-section {
+  background: #ffffff;
+  border: 1px solid #e6eef9;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 10px rgba(14, 42, 92, 0.03);
+}
+
+.grupo-section + .grupo-section {
+  margin-top: 14px;
+}
+
+.grupo-section h5 {
+  margin: 0 0 8px 0;
+  color: #0b4a8f;
+  font-weight: 700;
+}
+
+.tabla-calendario table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.tabla-calendario th, .tabla-calendario td {
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 0.95rem;
+  color: #24323a;
+  word-wrap: break-word;
+}
+
+.tabla-calendario thead th {
+  background: #F1F9FF;
+  color: #085b9a;
+  font-weight: 700;
+  border-bottom: 2px solid #e6eef9;
+}
+
+.tabla-calendario tbody tr:nth-child(even) {
+  background: #fbfdff;
+}
+
+.tabla-calendario tbody tr {
+  border-bottom: 1px solid #eef6ff;
+}
+
+.tabla-calendario td:last-child {
+  text-align: center;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;

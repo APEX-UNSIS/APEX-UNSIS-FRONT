@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../routes';
+import { ROUTES } from '../config/routes';
 import Layout from '../components/Layout';
 import './GestionSinodales.css';
 import { GraduateIcon, TrashIcon } from '../icons';
