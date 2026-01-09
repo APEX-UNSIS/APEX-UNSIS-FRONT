@@ -52,25 +52,27 @@ const GenerarCalendario = ({ user, onLogout }) => {
               </div>
 
 
-              <div className="form-group">
-                <label htmlFor="carrera" className="form-label">
-                  Carrera
-                </label>
-                <select
-                  id="carrera"
-                  name="carrera"
-                  className="form-input"
-                  value={formData.carrera}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Selecciona una carrera</option>
-                  <option value="informatica">Informática</option>
-                  <option value="administracion">Administración Publica</option>
-                  <option value="ciencias empresariales">Ciencias Empresariales</option>
-                  <option value="medicina">Medicina</option>
-                </select>
-              </div>
+              {user?.rol !== 'jefe' && (
+                <div className="form-group">
+                  <label htmlFor="carrera" className="form-label">
+                    Carrera
+                  </label>
+                  <select
+                    id="carrera"
+                    name="carrera"
+                    className="form-input"
+                    value={formData.carrera}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="">Selecciona una carrera</option>
+                    <option value="informatica">Informática</option>
+                    <option value="administracion">Administración Publica</option>
+                    <option value="ciencias empresariales">Ciencias Empresariales</option>
+                    <option value="medicina">Medicina</option>
+                  </select>
+                </div>
+              )}
 
               <div className="form-group">
                 <label htmlFor="tipo" className="form-label">

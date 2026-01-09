@@ -12,6 +12,7 @@ export const ROUTES = {
   // Rutas de Jefe de Carrera
   GENERAR_CALENDARIO: '/generar-calendario',
   VER_CALENDARIO: '/ver-calendario',
+  VER_CALENDARIO_SERVICIOS: '/ver-calendario-servicios',
   MODIFICAR_CALENDARIO: '/modificar-calendario',
   GESTION_SINODALES: '/gestion-sinodales',
   
@@ -35,17 +36,19 @@ export const ROUTES_BY_ROLE = {
     { path: ROUTES.HOME, label: 'Inicio', icon: HomeIcon },
     { path: ROUTES.ADMIN_USUARIOS, label: 'Gestión de Usuarios', icon: UsersIcon },
   ],
-  jefe: [
+    jefe: [
     { path: ROUTES.HOME, label: 'Inicio', icon: HomeIcon },
-    { path: ROUTES.GENERAR_CALENDARIO, label: 'Generar Calendario', icon: CalendarIcon },
-    { path: ROUTES.VER_CALENDARIO, label: 'Ver Calendario', icon: EyeIcon },
+    { path: ROUTES.GENERAR_CALENDARIO, label: 'Calendario de Examenes', icon: CalendarIcon },
+      // Muestra la vista de calendarios por grupos (VerCalendarioServicios), usar etiqueta plural
+      { path: ROUTES.VER_CALENDARIO, label: 'Ver Calendarios', icon: EyeIcon },
     { path: ROUTES.MODIFICAR_CALENDARIO, label: 'Modificar Calendario', icon: EditIcon },
     { path: ROUTES.GESTION_SINODALES, label: 'Gestión de Sinodales', icon: GraduateIcon },
   ],
   servicios: [
     { path: ROUTES.HOME, label: 'Inicio', icon: HomeIcon },
     { path: ROUTES.SERVICIOS_ESCOLARES, label: 'Validar Calendarios', icon: CheckIcon },
-    { path: ROUTES.VER_CALENDARIO, label: 'Ver Calendarios', icon: EyeIcon },
+      // Rutas para servicios: indicar que es la vista de servicios
+      { path: ROUTES.VER_CALENDARIO_SERVICIOS, label: 'Ver Calendario (Servicios)', icon: EyeIcon },
   ],
 };
 

@@ -108,7 +108,7 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
             <h2 className="welcome-title">
               {user.rol === 'admin' && 'Panel de Administración'}
-              {user.rol === 'jefe' && 'Generador de Horarios'}
+              {user.rol === 'jefe' && 'Calendario de Examenes'}
               {user.rol === 'servicios' && 'Validación de Calendarios'}
             </h2>
             
@@ -126,8 +126,8 @@ const Dashboard = ({ user, onLogout }) => {
               {user.rol === 'jefe' && (
                 <>
                   <div className="stat-card">
-                    <h3>Generar Calendario</h3>
-                    <p>Crea un nuevo calendario de exámenes</p>
+                    <h3>Calendario de Examenes</h3>
+                      <p>Crea un nuevo calendario de exámenes</p>
                     <button className="stat-button" onClick={() => navigate(ROUTES.GENERAR_CALENDARIO)}>
                       Crear Nuevo
                     </button>

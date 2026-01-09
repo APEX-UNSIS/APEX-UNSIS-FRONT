@@ -5,6 +5,7 @@ import Login from './components/Login';
 import Dashboard from './Dashboard/Dashboard';
 import GenerarCalendario from './Pages/GenerarCalendario';
 import VerCalendario from './Pages/VerCalendario';
+import VerCalendarioServicios from './Pages/VerCalendarioServicios';
 import ModificarCalendario from './Pages/ModificarCalendario';
 import AdminUsuarios from './Pages/AdminUsuarios';
 import ServiciosEscolares from './Pages/ServiciosEscolares';
@@ -113,10 +114,19 @@ function App() {
           <Route 
             path={ROUTES.VER_CALENDARIO} 
             element={
-              <ProtectedRoute allowedRoles={['jefe', 'servicios']}>
-                <VerCalendario user={auth.user} onLogout={handleLogout} />
+              <ProtectedRoute allowedRoles={['jefe']}>
+                <VerCalendarioServicios user={auth.user} onLogout={handleLogout} />
               </ProtectedRoute>
             } 
+          />
+
+          <Route 
+            path={ROUTES.VER_CALENDARIO_SERVICIOS}
+            element={
+              <ProtectedRoute allowedRoles={['servicios']}>
+                <VerCalendario user={auth.user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
           />
           
           <Route 

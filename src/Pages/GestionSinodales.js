@@ -179,15 +179,18 @@ const GestionSinodales = ({ user, onLogout }) => {
           <div className="sinodales-section">
             <div className="section-header">
               <h2 className="section-title">Asignación de Sinodales</h2>
-              <button 
-                className="agregar-sinodal-btn"
-                onClick={() => setShowAgregarSinodal(true)}
-              >
-                + Agregar Sinodal
-              </button>
+              {user?.rol !== 'jefe' && (
+                <button 
+                  className="agregar-sinodal-btn"
+                  onClick={() => setShowAgregarSinodal(true)}
+                >
+                  + Agregar Sinodal
+                </button>
+              )}
             </div>
 
             {/* Estadísticas */}
+            {user?.rol !== 'jefe' && (
             <div className="estadisticas-sinodales">
               <div className="estadistica-card">
                 <h3>Sinodales Disponibles</h3>
@@ -206,6 +209,7 @@ const GestionSinodales = ({ user, onLogout }) => {
                 <p className="numero">{sinodalesDisponibles.length}</p>
               </div>
             </div>
+            )}
 
             {/* Tabla de asignación */}
             <div className="asignacion-container">
@@ -283,6 +287,7 @@ const GestionSinodales = ({ user, onLogout }) => {
             </div>
 
             {/* Lista de sinodales */}
+            {user?.rol !== 'jefe' && (
             <div className="lista-sinodales">
               <h3 className="lista-title">Sinodales Disponibles</h3>
               <div className="sinodales-grid">
@@ -313,6 +318,7 @@ const GestionSinodales = ({ user, onLogout }) => {
                 ))}
               </div>
             </div>
+            )}
           </div>
         </div>
 
