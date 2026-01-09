@@ -1,5 +1,8 @@
 .generar-calendario-container {
+  /* Apilar header y contenido en columna para evitar desplazamientos laterales
+     y asegurarnos de que el área de contenido ocupe todo el ancho disponible. */
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
   background-color: white;
   font-family: 'Arial', sans-serif;
@@ -7,12 +10,18 @@
 
 /* Sidebar Styles */
 .sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
   width: 280px;
+  height: 100vh;
   background: linear-gradient(180deg, #1E3A8A 0%, #1E40AF 100%);
   color: white;
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow-y: auto;
 }
 
 .sidebar-header {
@@ -108,15 +117,24 @@
   display: flex;
   flex-direction: column;
   background-color: white;
+  margin-left: 280px;
+  min-height: 100vh;
 }
 
 .content-header {
+  position: fixed;
+  top: 0;
+  left: 280px;
+  right: 0;
   background: #1E3A8A;
   padding: 20px 30px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  z-index: 99;
+  height: 80px;
+  box-sizing: border-box;
 }
 
 .content-title {
@@ -134,8 +152,11 @@
 .content-area {
   flex: 1;
   padding: 40px;
+  padding-top: 120px; /* Compensar altura del header fijo */
   overflow-y: auto;
   background-color: white;
+  min-height: calc(100vh - 80px);
+  width: 100%;
 }
 
 .form-section {
@@ -222,23 +243,121 @@
   transform: translateY(0);
 }
 
+/* Mobile menu toggle */
+.menu-toggle {
+  display: none;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1001;
+  transition: all 0.3s ease;
+}
+
+.menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 /* Responsive */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 250px;
+  }
+
+  .main-content {
+    margin-left: 250px;
+  }
+
+  .content-header {
+    left: 250px;
+  }
+
+  .form-section {
+    max-width: 90%;
+  }
+}
+
 @media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+
   .generar-calendario-container {
     flex-direction: column;
+    position: relative;
   }
   
   .sidebar {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+  }
+
+  .sidebar.open {
+    left: 0;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
+  }
+
+  .sidebar-header {
+    padding-top: 60px;
+  }
+
+  /* Overlay para cerrar sidebar al hacer clic fuera */
+  .generar-calendario-container::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+
+  .generar-calendario-container:has(.sidebar.open)::after {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+  }
+
+  .main-content {
     width: 100%;
-    height: auto;
+    margin-left: 0;
   }
   
   .content-area {
-    padding: 20px;
+    padding: 20px 15px;
+  }
+
+  .content-header {
+    padding: 15px 20px;
+    padding-left: 60px;
+    left: 0;
+    height: 70px;
+  }
+
+  .content-area {
+    padding-top: 100px;
   }
   
   .form-section {
     padding: 30px 20px;
+    max-width: 100%;
   }
   
   .form-title {
@@ -249,14 +368,30 @@
     max-width: 100px;
     max-height: 60px;
   }
+
+  .form-input, .form-select {
+    font-size: 0.95rem;
+  }
 }
 
 @media (max-width: 480px) {
+  .menu-toggle {
+    top: 10px;
+    left: 10px;
+    padding: 8px 12px;
+    font-size: 1rem;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
   .content-header {
-    padding: 15px 20px;
+    padding: 15px 15px;
+    padding-left: 55px;
     flex-direction: column;
     gap: 10px;
-    text-align: center;
+    align-items: flex-start;
   }
   
   .content-title {
@@ -264,7 +399,8 @@
   }
   
   .form-title {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
+    margin-bottom: 25px;
   }
   
   .sidebar-unsis-image {
@@ -273,6 +409,34 @@
   }
   
   .form-section {
-    padding: 20px 15px;
+    padding: 25px 15px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    font-size: 0.9rem;
+  }
+
+  .form-input, .form-select {
+    padding: 12px 14px;
+    font-size: 0.9rem;
+  }
+
+  .generar-btn {
+    padding: 14px 25px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .form-title {
+    font-size: 1.2rem;
+  }
+
+  .content-title {
+    font-size: 1.2rem;
   }
 }
