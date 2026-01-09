@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../routes';
+import Layout from '../components/Layout';
 import './GestionSinodales.css';
-import unsisImage from '../assets/images/UNSI.png';
+import { GraduateIcon, TrashIcon } from '../icons';
 
-const GestionSinodales = ({ user }) => {
+const GestionSinodales = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const [materias, setMaterias] = useState([
     {
@@ -78,9 +80,6 @@ const GestionSinodales = ({ user }) => {
   const [showAgregarSinodal, setShowAgregarSinodal] = useState(false);
   const [nuevoSinodal, setNuevoSinodal] = useState({ nombre: '', email: '', telefono: '' });
 
-  const handleBackToDashboard = () => {
-    navigate('/dashboard');
-  };
 
   const handleAsignarSinodal = (materiaId, sinodalId) => {
     const sinodal = sinodalesDisponibles.find(s => s.id === sinodalId);
@@ -174,78 +173,8 @@ const GestionSinodales = ({ user }) => {
   };
 
   return (
-    <div className="gestion-sinodales-container">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <img src={unsisImage} alt="UNSIS" className="sidebar-unsis-image" />
-          <h2 className="sidebar-title">APEX-UNSIS</h2>
-          <div className="user-role-badge">🎓 Jefe de Carrera</div>
-        </div>
-        
-        <nav className="sidebar-nav">
-          <ul className="nav-menu">
-            <li className="nav-item">
-              <a href="#inicio" className="nav-link" onClick={handleBackToDashboard}>
-                <span className="nav-icon">🏠</span>
-                Inicio
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#generar" className="nav-link" onClick={() => navigate('/generar-calendario')}>
-                <span className="nav-icon">📅</span>
-                Generar Calendario
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#ver" className="nav-link" onClick={() => navigate('/ver-calendario')}>
-                <span className="nav-icon">👁️</span>
-                Ver Calendario
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#modificar" className="nav-link" onClick={() => navigate('/modificar-calendario')}>
-                <span className="nav-icon">✏️</span>
-                Modificar Calendario
-              </a>
-            </li>
-            <li className="nav-item active">
-              <a href="#sinodales" className="nav-link">
-                <span className="nav-icon">🎓</span>
-                Gestión de Sinodales
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#configuracion" className="nav-link">
-                <span className="nav-icon">⚙️</span>
-                Configuración
-              </a>
-            </li>
-          </ul>
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <div className="user-avatar">🎓</div>
-            <div className="user-details">
-              <span className="user-name">{user.nombre}</span>
-              <span className="user-email">Jefe de Carrera</span>
-            </div>
-          </div>
-          <button className="logout-btn" onClick={() => navigate('/')}>
-            <span className="logout-icon">🚪</span>
-            Cerrar Sesión
-          </button>
-        </div>
-      </div>
-
-      <div className="main-content">
-        <header className="content-header">
-          <h1 className="content-title">APEX-UNSIS</h1>
-          <div className="header-actions">
-            <span className="welcome-text">Gestión de Sinodales - Grupo 706</span>
-          </div>
-        </header>
-
+    <Layout user={user} onLogout={onLogout}>
+      <div className="gestion-sinodales-container">
         <div className="content-area">
           <div className="sinodales-section">
             <div className="section-header">
@@ -303,7 +232,7 @@ const GestionSinodales = ({ user }) => {
                               className="remover-btn"
                               onClick={() => handleRemoverSinodal(materia.id)}
                             >
-                              ❌ Remover
+                              <TrashIcon style={{marginRight:8}}/>Remover
                             </button>
                           </div>
                         ) : (
@@ -344,7 +273,7 @@ const GestionSinodales = ({ user }) => {
                           }}
                           disabled={!sinodalesDisponibles.some(s => s.disponible)}
                         >
-                          🎓 Asignar Automático
+                          <GraduateIcon style={{marginRight:8}}/>Asignar Automático
                         </button>
                       </td>
                     </tr>
@@ -377,7 +306,7 @@ const GestionSinodales = ({ user }) => {
                         onClick={() => handleEliminarSinodal(sinodal.id)}
                         disabled={sinodal.materiasAsignadas > 0}
                       >
-                        🗑️ Eliminar
+                        <TrashIcon style={{marginRight:8}}/>Eliminar
                       </button>
                     </div>
                   </div>
@@ -386,7 +315,6 @@ const GestionSinodales = ({ user }) => {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Modal para agregar sinodal */}
       {showAgregarSinodal && (
@@ -442,7 +370,8 @@ const GestionSinodales = ({ user }) => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Layout>
   );
 };
 

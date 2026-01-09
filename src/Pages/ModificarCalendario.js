@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { EyeIcon, EditIcon, SaveIcon, TrashIcon, LogoutIcon } from '../icons';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../routes';
+import Layout from '../components/Layout';
 import './ModificarCalendario.css';
-import unsisImage from '../assets/images/UNSI.png';
 
-const ModificarCalendario = ({ user }) => {
+const ModificarCalendario = ({ user, onLogout }) => {
   const navigate = useNavigate();
   
   const [calendario, setCalendario] = useState({
@@ -67,9 +69,6 @@ const ModificarCalendario = ({ user }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [accionConfirmar, setAccionConfirmar] = useState('');
 
-  const handleBackToDashboard = () => {
-    navigate('/dashboard');
-  };
 
   const handleEditarHorario = (horario) => {
     setEditandoId(horario.id);
@@ -115,17 +114,17 @@ const ModificarCalendario = ({ user }) => {
   const confirmarAccion = () => {
     if (accionConfirmar === 'borrador') {
       setCalendario({ ...calendario, estado: 'borrador' });
-      alert('✅ Calendario guardado como borrador');
+      alert('Calendario guardado como borrador');
     } else if (accionConfirmar === 'cambios') {
       setCalendario({ ...calendario, estado: 'pendiente' });
-      alert('✅ Cambios guardados exitosamente');
+      alert('Cambios guardados exitosamente');
     }
     setShowConfirm(false);
     setAccionConfirmar('');
   };
 
   const handleSalir = () => {
-    navigate('/ver-calendario');
+    navigate(ROUTES.VER_CALENDARIO);
   };
 
   const handleEliminarHorario = (id) => {
@@ -156,86 +155,8 @@ const ModificarCalendario = ({ user }) => {
   };
 
   return (
-    <div className="modificar-calendario-container">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <img src={unsisImage} alt="UNSIS" className="sidebar-unsis-image" />
-          <h2 className="sidebar-title">APEX-UNSIS</h2>
-          <div className="user-role-badge">🎓 Jefe de Carrera</div>
-        </div>
-        
-        <nav className="sidebar-nav">
-          <ul className="nav-menu">
-            <li className="nav-item">
-              <a href="#inicio" className="nav-link" onClick={handleBackToDashboard}>
-                <span className="nav-icon">🏠</span>
-                Inicio
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#generar" className="nav-link" onClick={() => navigate('/generar-calendario')}>
-                <span className="nav-icon">📅</span>
-                Generar Calendario
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#ver" className="nav-link" onClick={() => navigate('/ver-calendario')}>
-                <span className="nav-icon">👁️</span>
-                Ver Calendario
-              </a>
-            </li>
-            <li className="nav-item active">
-              <a href="#modificar" className="nav-link">
-                <span className="nav-icon">✏️</span>
-                Modificar Calendario
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#sinodales" className="nav-link" onClick={() => navigate('/gestion-sinodales')}>
-                <span className="nav-icon">🎓</span>
-                Gestión de Sinodales
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#configuracion" className="nav-link">
-                <span className="nav-icon">⚙️</span>
-                Configuración
-              </a>
-            </li>
-          </ul>
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <div className="user-avatar">🎓</div>
-            <div className="user-details">
-              <span className="user-name">{user.nombre}</span>
-              <span className="user-email">Jefe de Carrera</span>
-            </div>
-          </div>
-          <button className="logout-btn" onClick={() => navigate('/')}>
-            <span className="logout-icon">🚪</span>
-            Cerrar Sesión
-          </button>
-        </div>
-      </div>
-
-      <div className="main-content">
-        <header className="content-header">
-          <h1 className="content-title">APEX-UNSIS</h1>
-          <div className="header-actions">
-            <span className="welcome-text">Modificar Calendario - {calendario.carrera}</span>
-            <span className="calendario-info">
-              Grupo: {calendario.grupo} | Período: {calendario.periodo} | Estado: 
-              <span className={`estado-badge ${calendario.estado}`}>
-                {calendario.estado === 'borrador' && '📝 Borrador'}
-                {calendario.estado === 'pendiente' && '⏳ Pendiente'}
-                {calendario.estado === 'aprobado' && '✅ Aprobado'}
-              </span>
-            </span>
-          </div>
-        </header>
-
+    <Layout user={user} onLogout={onLogout}>
+      <div className="modificar-calendario-container">
         <div className="content-area">
           <div className="modificar-section">
             <div className="section-header">
@@ -249,9 +170,9 @@ const ModificarCalendario = ({ user }) => {
                 </button>
                 <button 
                   className="previsualizar-btn"
-                  onClick={() => navigate('/ver-calendario')}
+                  onClick={() => navigate(ROUTES.VER_CALENDARIO)}
                 >
-                  👁️ Previsualizar
+                  <EyeIcon style={{marginRight:8}}/>Previsualizar
                 </button>
               </div>
             </div>
@@ -368,13 +289,13 @@ const ModificarCalendario = ({ user }) => {
                                 className="guardar-edit-btn"
                                 onClick={handleGuardarCambios}
                               >
-                                💾 Guardar
+                                <SaveIcon style={{marginRight:8}}/>Guardar
                               </button>
                               <button 
                                 className="cancelar-edit-btn"
                                 onClick={handleCancelarEdicion}
                               >
-                                ❌ Cancelar
+                                Cancelar
                               </button>
                             </div>
                           </td>
@@ -393,13 +314,13 @@ const ModificarCalendario = ({ user }) => {
                                 className="editar-horario-btn"
                                 onClick={() => handleEditarHorario(horario)}
                               >
-                                ✏️ Editar
+                                <EditIcon style={{marginRight:8}}/>Editar
                               </button>
                               <button 
                                 className="eliminar-horario-btn"
                                 onClick={() => handleEliminarHorario(horario.id)}
                               >
-                                🗑️ Eliminar
+                                <TrashIcon style={{marginRight:8}}/>Eliminar
                               </button>
                             </div>
                           </td>
@@ -417,26 +338,25 @@ const ModificarCalendario = ({ user }) => {
                 className="guardar-borrador-btn"
                 onClick={handleGuardarBorrador}
               >
-                💾 Guardar Borrador
+                <SaveIcon style={{marginRight:8}}/>Guardar Borrador
               </button>
               
               <button 
                 className="guardar-cambios-btn"
                 onClick={handleGuardarCambiosFinal}
               >
-                ✅ Guardar Cambios
+                <SaveIcon style={{marginRight:8}}/>Guardar Cambios
               </button>
               
               <button 
                 className="salir-btn"
                 onClick={handleSalir}
               >
-                🚪 Salir sin Guardar
+                <LogoutIcon style={{marginRight:8}}/>Salir sin Guardar
               </button>
             </div>
           </div>
         </div>
-      </div>
 
       {/* Modal de confirmación */}
       {showConfirm && (
@@ -465,7 +385,8 @@ const ModificarCalendario = ({ user }) => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Layout>
   );
 };
 

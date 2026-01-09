@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../routes';
 import './Login.css';
 import unsisImage from '../assets/images/UNSI.png';
 import apexImage from '../assets/images/logo.png';
@@ -16,7 +17,7 @@ const Login = ({ onLogin }) => {
     
     if (username && password) {
       if (onLogin(username, password)) {
-        navigate('/dashboard');
+        navigate(ROUTES.HOME);
       } else {
         setError('Usuario o contraseña incorrectos');
       }

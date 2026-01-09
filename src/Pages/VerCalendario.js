@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
+import { DownloadIcon, EditIcon, SendIcon } from '../icons';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../routes';
+import Layout from '../components/Layout';
 import './VerCalendario.css';
-import unsisImage from '../assets/images/UNSI.png';
 
-const VerCalendario = () => {
+const VerCalendario = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-
-  const handleBackToDashboard = () => {
-    navigate('/dashboard');
-  };
 
 
   const handleDownload = () => {
@@ -26,12 +24,12 @@ const VerCalendario = () => {
     setTimeout(() => {
       setLoading(false);
       setShowConfirmModal(false);
-      alert('✅ Calendario enviado exitosamente a Servicios Escolares');
+      alert('Calendario enviado exitosamente a Servicios Escolares');
     }, 1500);
   };
 
   const handleModificar = () => {
-    navigate('/modificar-calendario');
+    navigate(ROUTES.MODIFICAR_CALENDARIO);
   };
 
   const horarios = [
@@ -78,63 +76,8 @@ const VerCalendario = () => {
   ];
 
   return (
-    <div className="ver-calendario-container">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <img src={unsisImage} alt="UNSIS" className="sidebar-unsis-image" />
-        </div>
-        
-        <nav className="sidebar-nav">
-          <ul className="nav-menu">
-            <li className="nav-item">
-              <a href="#inicio" className="nav-link" onClick={handleBackToDashboard}>
-                <span className="nav-icon">🏠</span>
-                Inicio
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#generar-calendario" className="nav-link" onClick={() => navigate('/generar-calendario')}>
-                <span className="nav-icon">📅</span>
-                Generar Calendario
-              </a>
-            </li>
-            <li className="nav-item active">
-              <a href="#ver-calendario" className="nav-link">
-                <span className="nav-icon">👁️</span>
-                Ver Calendario
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#modificar-calendario" className="nav-link" onClick={handleModificar}>
-                <span className="nav-icon">✏️</span>
-                Modificar Calendario
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#configuracion" className="nav-link">
-                <span className="nav-icon">⚙️</span>
-                Configuración
-              </a>
-            </li>
-          </ul>
-        </nav>
-
-        <div className="sidebar-footer">
-          <button className="logout-btn" onClick={() => navigate('/')}>
-            <span className="logout-icon">🚪</span>
-            Cerrar Sesión
-          </button>
-        </div>
-      </div>
-
-      <div className="main-content">
-        <header className="content-header">
-          <h1 className="content-title">APEX-UNSIS</h1>
-          <div className="header-actions">
-            <span className="welcome-text">Calendario de Exámenes 2025 - Grupo 706</span>
-          </div>
-        </header>
-
+    <Layout user={user} onLogout={onLogout}>
+      <div className="ver-calendario-container">
         <div className="content-area">
           <div className="calendario-section">
             <h2 className="calendario-title">Exámenes 2025</h2>
@@ -142,9 +85,9 @@ const VerCalendario = () => {
             <div className="table-info">
               <span>Total de materias: {horarios.length}</span>
               <div className="table-actions">
-                <button className="download-btn" onClick={handleDownload}>
-                  📥 Descargar
-                </button>
+                  <button className="download-btn" onClick={handleDownload}>
+                    <DownloadIcon style={{marginRight:8}}/>Descargar
+                  </button>
               </div>
             </div>
             
@@ -189,21 +132,19 @@ const VerCalendario = () => {
                   </>
                 ) : (
                   <>
-                    📨 Enviar a Servicios Escolares
+                    <SendIcon style={{marginRight:8}}/>Enviar a Servicios Escolares
                   </>
                 )}
               </button>
-              
-              <button 
-                className="modificar-btn"
-                onClick={handleModificar}
-              >
-                ✏️ Editar Calendario
-              </button>
+                <button 
+                  className="modificar-btn"
+                  onClick={handleModificar}
+                >
+                  <EditIcon style={{marginRight:8}}/>Editar Calendario
+                </button>
             </div>
           </div>
         </div>
-      </div>
 
       {/* Modal de confirmación */}
       {showConfirmModal && (
@@ -231,7 +172,8 @@ const VerCalendario = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Layout>
   );
 };
 

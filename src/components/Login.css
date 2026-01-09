@@ -180,7 +180,19 @@
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .login-card {
+    max-width: 90%;
+    padding: 35px 30px;
+  }
+}
+
 @media (max-width: 768px) {
+  .login-container {
+    padding: 15px;
+    min-height: 100vh;
+  }
+
   .login-content {
     flex-direction: column;
     gap: 30px;
@@ -200,6 +212,15 @@
   
   .login-card {
     padding: 30px 25px;
+    min-height: auto;
+  }
+
+  .institution-name {
+    font-size: 1.5rem;
+  }
+
+  .login-form {
+    gap: 20px;
   }
 }
 
@@ -210,10 +231,12 @@
   
   .login-card {
     padding: 25px 20px;
+    border-radius: 10px;
   }
   
   .institution-name {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
+    letter-spacing: 0.5px;
   }
   
   .unsis-image {
@@ -230,5 +253,39 @@
     flex-direction: column;
     gap: 10px;
     align-items: flex-start;
+  }
+
+  .login-button {
+    padding: 14px 25px;
+    font-size: 1rem;
+  }
+
+  .form-input {
+    padding: 12px 14px;
+    font-size: 0.95rem;
+  }
+
+  .form-label {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .login-card {
+    padding: 20px 15px;
+  }
+
+  .institution-name {
+    font-size: 1.2rem;
+  }
+
+  .unsis-image {
+    max-width: 80px;
+    max-height: 60px;
+  }
+
+  .apex-image {
+    max-width: 120px;
+    max-height: 100px;
   }
 }
