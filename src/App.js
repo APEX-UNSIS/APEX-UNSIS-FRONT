@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ROUTES } from './routes';
+import { ROUTES } from './config/routes';
 import Login from './components/Login';
 import Dashboard from './Dashboard/Dashboard';
 import GenerarCalendario from './Pages/GenerarCalendario';
