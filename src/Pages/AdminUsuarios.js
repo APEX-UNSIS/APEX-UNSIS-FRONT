@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../routes';
+import Layout from '../components/Layout';
 import './AdminUsuarios.css';
-import unsisImage from '../assets/images/UNSI.png';
+import { CrownIcon, GraduateIcon, ClipboardIcon, EditIcon, TrashIcon } from '../icons';
 
-const AdminUsuarios = ({ user }) => {
+const AdminUsuarios = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([
     { id: 1, nombre: 'Juan Pérez', email: 'juan@unsis.edu.mx', rol: 'jefe', carrera: 'Sistemas', activo: true },
@@ -21,9 +23,6 @@ const AdminUsuarios = ({ user }) => {
     area: ''
   });
 
-  const handleBackToDashboard = () => {
-    navigate('/dashboard');
-  };
 
   const handleAgregarUsuario = () => {
     setEditando(null);
@@ -74,60 +73,8 @@ const AdminUsuarios = ({ user }) => {
   };
 
   return (
-    <div className="admin-usuarios-container">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <img src={unsisImage} alt="UNSIS" className="sidebar-unsis-image" />
-          <h2 className="sidebar-title">APEX-UNSIS</h2>
-          <div className="user-role-badge">👑 Administrador</div>
-        </div>
-        
-        <nav className="sidebar-nav">
-          <ul className="nav-menu">
-            <li className="nav-item">
-              <a href="#inicio" className="nav-link" onClick={handleBackToDashboard}>
-                <span className="nav-icon">🏠</span>
-                Inicio
-              </a>
-            </li>
-            <li className="nav-item active">
-              <a href="#usuarios" className="nav-link">
-                <span className="nav-icon">👥</span>
-                Gestión de Usuarios
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#configuracion" className="nav-link">
-                <span className="nav-icon">⚙️</span>
-                Configuración
-              </a>
-            </li>
-          </ul>
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <div className="user-avatar">👑</div>
-            <div className="user-details">
-              <span className="user-name">{user.nombre}</span>
-              <span className="user-email">Administrador</span>
-            </div>
-          </div>
-          <button className="logout-btn" onClick={() => navigate('/')}>
-            <span className="logout-icon">🚪</span>
-            Cerrar Sesión
-          </button>
-        </div>
-      </div>
-
-      <div className="main-content">
-        <header className="content-header">
-          <h1 className="content-title">APEX-UNSIS</h1>
-          <div className="header-actions">
-            <span className="welcome-text">Gestión de Usuarios</span>
-          </div>
-        </header>
-
+    <Layout user={user} onLogout={onLogout}>
+      <div className="admin-usuarios-container">
         <div className="content-area">
           <div className="usuarios-section">
             <div className="section-header">
@@ -157,10 +104,10 @@ const AdminUsuarios = ({ user }) => {
                       <td>{usuario.nombre}</td>
                       <td>{usuario.email}</td>
                       <td>
-                        <span className={`rol-badge ${usuario.rol}`}>
-                          {usuario.rol === 'admin' && '👑 Administrador'}
-                          {usuario.rol === 'jefe' && '🎓 Jefe de Carrera'}
-                          {usuario.rol === 'servicios' && '📋 Servicios Escolares'}
+                          <span className={`rol-badge ${usuario.rol}`}>
+                          {usuario.rol === 'admin' && (<><CrownIcon style={{marginRight:6}}/>Administrador</>)}
+                          {usuario.rol === 'jefe' && (<><GraduateIcon style={{marginRight:6}}/>Jefe de Carrera</>)}
+                          {usuario.rol === 'servicios' && (<><ClipboardIcon style={{marginRight:6}}/>Servicios Escolares</>)}
                         </span>
                       </td>
                       <td>
@@ -179,13 +126,13 @@ const AdminUsuarios = ({ user }) => {
                             className="editar-btn"
                             onClick={() => handleEditarUsuario(usuario)}
                           >
-                            ✏️ Editar
+                            <EditIcon style={{marginRight:8}}/>Editar
                           </button>
                           <button 
                             className="eliminar-btn"
                             onClick={() => handleEliminarUsuario(usuario.id)}
                           >
-                            🗑️ Eliminar
+                            <TrashIcon style={{marginRight:8}}/>Eliminar
                           </button>
                         </div>
                       </td>
@@ -215,7 +162,6 @@ const AdminUsuarios = ({ user }) => {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Modal para agregar/editar usuario */}
       {showModal && (
@@ -251,9 +197,9 @@ const AdminUsuarios = ({ user }) => {
                 value={formData.rol}
                 onChange={(e) => setFormData({...formData, rol: e.target.value})}
               >
-                <option value="jefe">🎓 Jefe de Carrera</option>
-                <option value="servicios">📋 Servicios Escolares</option>
-                <option value="admin">👑 Administrador</option>
+                <option value="jefe">Jefe de Carrera</option>
+                <option value="servicios">Servicios Escolares</option>
+                <option value="admin">Administrador</option>
               </select>
             </div>
             
@@ -303,7 +249,8 @@ const AdminUsuarios = ({ user }) => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Layout>
   );
 };
 

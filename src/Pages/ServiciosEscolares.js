@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../routes';
+import Layout from '../components/Layout';
 import './ServiciosEscolares.css';
-import unsisImage from '../assets/images/UNSI.png';
+import { EditIcon, CheckIcon, TrashIcon } from '../icons';
 
-const ServiciosEscolares = ({ user }) => {
+const ServiciosEscolares = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const [calendarios, setCalendarios] = useState([
     { 
@@ -36,9 +38,6 @@ const ServiciosEscolares = ({ user }) => {
   const [selectedCalendario, setSelectedCalendario] = useState(null);
   const [observaciones, setObservaciones] = useState('');
 
-  const handleBackToDashboard = () => {
-    navigate('/dashboard');
-  };
 
   const handleRevisar = (calendario) => {
     setSelectedCalendario(calendario);
@@ -88,67 +87,8 @@ const ServiciosEscolares = ({ user }) => {
   };
 
   return (
-    <div className="servicios-escolares-container">
-      {/* Sidebar similar a otros componentes */}
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <img src={unsisImage} alt="UNSIS" className="sidebar-unsis-image" />
-          <h2 className="sidebar-title">APEX-UNSIS</h2>
-          <div className="user-role-badge">📋 Servicios Escolares</div>
-        </div>
-        
-        <nav className="sidebar-nav">
-          <ul className="nav-menu">
-            <li className="nav-item">
-              <a href="#inicio" className="nav-link" onClick={handleBackToDashboard}>
-                <span className="nav-icon">🏠</span>
-                Inicio
-              </a>
-            </li>
-            <li className="nav-item active">
-              <a href="#servicios" className="nav-link">
-                <span className="nav-icon">✅</span>
-                Validar Calendarios
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#ver" className="nav-link" onClick={() => navigate('/ver-calendario')}>
-                <span className="nav-icon">👁️</span>
-                Ver Calendarios
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#configuracion" className="nav-link">
-                <span className="nav-icon">⚙️</span>
-                Configuración
-              </a>
-            </li>
-          </ul>
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <div className="user-avatar">📋</div>
-            <div className="user-details">
-              <span className="user-name">{user.nombre}</span>
-              <span className="user-email">Servicios Escolares</span>
-            </div>
-          </div>
-          <button className="logout-btn" onClick={() => navigate('/')}>
-            <span className="logout-icon">🚪</span>
-            Cerrar Sesión
-          </button>
-        </div>
-      </div>
-
-      <div className="main-content">
-        <header className="content-header">
-          <h1 className="content-title">APEX-UNSIS</h1>
-          <div className="header-actions">
-            <span className="welcome-text">Validación de Calendarios</span>
-          </div>
-        </header>
-
+    <Layout user={user} onLogout={onLogout}>
+      <div className="servicios-escolares-container">
         <div className="content-area">
           <div className="validacion-section">
             <h2 className="section-title">Calendarios Recibidos</h2>
@@ -205,7 +145,7 @@ const ServiciosEscolares = ({ user }) => {
                       className="revisar-btn"
                       onClick={() => handleRevisar(calendario)}
                     >
-                      📝 Revisar
+                      <EditIcon style={{marginRight:8}}/>Revisar
                     </button>
                     
                     <button 
@@ -213,7 +153,7 @@ const ServiciosEscolares = ({ user }) => {
                       onClick={() => handleAprobar(calendario.id)}
                       disabled={calendario.estado === 'aprobado'}
                     >
-                      ✅ Dar V°B°
+                      <CheckIcon style={{marginRight:8}}/>Dar V°B°
                     </button>
                     
                     <button 
@@ -221,7 +161,7 @@ const ServiciosEscolares = ({ user }) => {
                       onClick={() => handleRechazar(calendario.id)}
                       disabled={calendario.estado === 'rechazado'}
                     >
-                      ❌ Rechazar
+                      <TrashIcon style={{marginRight:8}}/>Rechazar
                     </button>
                   </div>
                 </div>
@@ -248,7 +188,6 @@ const ServiciosEscolares = ({ user }) => {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Modal de revisión */}
       {showModal && selectedCalendario && (
@@ -282,7 +221,7 @@ const ServiciosEscolares = ({ user }) => {
                     setShowModal(false);
                   }}
                 >
-                  ✅ Aprobar con V°B°
+                  <CheckIcon style={{marginRight:8}}/>Aprobar con V°B°
                 </button>
                 <button 
                   className="btn-rechazar"
@@ -291,7 +230,7 @@ const ServiciosEscolares = ({ user }) => {
                     setShowModal(false);
                   }}
                 >
-                  ❌ Rechazar calendario
+                  <TrashIcon style={{marginRight:8}}/>Rechazar calendario
                 </button>
               </div>
             </div>
@@ -313,7 +252,8 @@ const ServiciosEscolares = ({ user }) => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Layout>
   );
 };
 

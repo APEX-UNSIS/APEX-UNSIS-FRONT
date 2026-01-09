@@ -1,86 +1,69 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ROUTES, getRoutesByRole } from '../routes';
 import './Dashboard.css';
 import unsisImage from '../assets/images/UNSI.png';
+import { CrownIcon, GraduateIcon, ClipboardIcon, LogoutIcon } from '../icons';
 import apexImage from '../assets/images/logo.png';
 
 const Dashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     onLogout();
-    navigate('/');
+    navigate(ROUTES.LOGIN);
   };
 
-  // Menú según rol
-  const getMenuItems = () => {
-    const baseItems = [
-      { id: 'inicio', label: 'Inicio', icon: '🏠', path: '/dashboard' }
-    ];
-
-    if (user.rol === 'admin') {
-      return [
-        ...baseItems,
-        { id: 'usuarios', label: 'Gestión de Usuarios', icon: '👥', path: '/admin-usuarios' },
-        { id: 'configuracion', label: 'Configuración', icon: '⚙️', path: '#configuracion' }
-      ];
-    }
-
-    if (user.rol === 'jefe') {
-      return [
-        ...baseItems,
-        { id: 'generar', label: 'Generar Calendario', icon: '📅', path: '/generar-calendario' },
-        { id: 'ver', label: 'Ver Calendario', icon: '👁️', path: '/ver-calendario' },
-        { id: 'modificar', label: 'Modificar Calendario', icon: '✏️', path: '/modificar-calendario' },
-        { id: 'sinodales', label: 'Gestión de Sinodales', icon: '🎓', path: '/gestion-sinodales' },
-        { id: 'configuracion', label: 'Configuración', icon: '⚙️', path: '#configuracion' }
-      ];
-    }
-
-    if (user.rol === 'servicios') {
-      return [
-        ...baseItems,
-        { id: 'validar', label: 'Validar Calendarios', icon: '✅', path: '/servicios-escolares' },
-        { id: 'ver', label: 'Ver Calendarios', icon: '👁️', path: '/ver-calendario' },
-        { id: 'configuracion', label: 'Configuración', icon: '⚙️', path: '#configuracion' }
-      ];
-    }
-
-    return baseItems;
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
-  const menuItems = getMenuItems();
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
+
+  // Cerrar sidebar al cambiar de ruta
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setSidebarOpen(false);
+    };
+    return () => {
+      handleRouteChange();
+    };
+  }, []);
+
+  // Obtener menú según rol usando las constantes de rutas
+  const menuItems = getRoutesByRole(user.rol);
 
   return (
     <div className="dashboard-container">
-      <div className="sidebar">
+      <button className="menu-toggle" onClick={toggleSidebar} aria-label="Toggle menu">
+        {sidebarOpen ? '✕' : '☰'}
+      </button>
+      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <img src={unsisImage} alt="UNSIS" className="sidebar-unsis-image" />
           <h2 className="sidebar-title">APEX-UNSIS</h2>
           <div className="user-role-badge">
-            {user.rol === 'admin' && '👑 Administrador'}
-            {user.rol === 'jefe' && '🎓 Jefe de Carrera'}
-            {user.rol === 'servicios' && '📋 Servicios Escolares'}
+            {user.rol === 'admin' && <><CrownIcon /> Administrador</>}
+            {user.rol === 'jefe' && <><GraduateIcon /> Jefe de Carrera</>}
+            {user.rol === 'servicios' && <><ClipboardIcon /> Servicios Escolares</>}
           </div>
         </div>
         
         <nav className="sidebar-nav">
           <ul className="nav-menu">
-            {menuItems.map((item) => (
-              <li key={item.id} className="nav-item">
-                <a 
-                  href={item.path} 
+            {menuItems.map((item, index) => (
+              <li key={`${item.path}-${index}`} className="nav-item">
+                <Link 
+                  to={item.path} 
                   className="nav-link"
-                  onClick={(e) => {
-                    if (item.path.startsWith('/')) {
-                      e.preventDefault();
-                      navigate(item.path);
-                    }
-                  }}
+                  onClick={closeSidebar}
                 >
-                  <span className="nav-icon">{item.icon}</span>
+                  <span className="nav-icon">{(() => { const Icon = item.icon; return Icon ? <Icon /> : null; })()}</span>
                   {item.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
@@ -89,9 +72,9 @@ const Dashboard = ({ user, onLogout }) => {
         <div className="sidebar-footer">
           <div className="user-info">
             <div className="user-avatar">
-              {user.rol === 'admin' && '👑'}
-              {user.rol === 'jefe' && '🎓'}
-              {user.rol === 'servicios' && '📋'}
+              {user.rol === 'admin' && <CrownIcon />}
+              {user.rol === 'jefe' && <GraduateIcon />}
+              {user.rol === 'servicios' && <ClipboardIcon />}
             </div>
             <div className="user-details">
               <span className="user-name">{user.nombre}</span>
@@ -99,7 +82,7 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
           </div>
           <button className="logout-btn" onClick={handleLogout}>
-            <span className="logout-icon">🚪</span>
+            <LogoutIcon className="logout-icon" />
             Cerrar Sesión
           </button>
         </div>
@@ -134,7 +117,7 @@ const Dashboard = ({ user, onLogout }) => {
                 <div className="stat-card">
                   <h3>Gestión de Usuarios</h3>
                   <p>Administra los usuarios del sistema</p>
-                  <button className="stat-button" onClick={() => navigate('/admin-usuarios')}>
+                  <button className="stat-button" onClick={() => navigate(ROUTES.ADMIN_USUARIOS)}>
                     Ir a Gestión
                   </button>
                 </div>
@@ -145,14 +128,14 @@ const Dashboard = ({ user, onLogout }) => {
                   <div className="stat-card">
                     <h3>Generar Calendario</h3>
                     <p>Crea un nuevo calendario de exámenes</p>
-                    <button className="stat-button" onClick={() => navigate('/generar-calendario')}>
+                    <button className="stat-button" onClick={() => navigate(ROUTES.GENERAR_CALENDARIO)}>
                       Crear Nuevo
                     </button>
                   </div>
                   <div className="stat-card">
                     <h3>Gestión de Sinodales</h3>
                     <p>Asigna sinodales a las materias</p>
-                    <button className="stat-button" onClick={() => navigate('/gestion-sinodales')}>
+                    <button className="stat-button" onClick={() => navigate(ROUTES.GESTION_SINODALES)}>
                       Gestionar
                     </button>
                   </div>
@@ -163,7 +146,7 @@ const Dashboard = ({ user, onLogout }) => {
                 <div className="stat-card">
                   <h3>Validar Calendarios</h3>
                   <p>Revisa y valida calendarios enviados</p>
-                  <button className="stat-button" onClick={() => navigate('/servicios-escolares')}>
+                  <button className="stat-button" onClick={() => navigate(ROUTES.SERVICIOS_ESCOLARES)}>
                     Ver Pendientes
                   </button>
                 </div>

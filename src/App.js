@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ROUTES } from './routes';
 import Login from './components/Login';
 import Dashboard from './Dashboard/Dashboard';
 import GenerarCalendario from './Pages/GenerarCalendario';
@@ -8,6 +9,7 @@ import ModificarCalendario from './Pages/ModificarCalendario';
 import AdminUsuarios from './Pages/AdminUsuarios';
 import ServiciosEscolares from './Pages/ServiciosEscolares';
 import GestionSinodales from './Pages/GestionSinodales';
+import NotFound from './components/NotFound';
 import './App.css';
 
 // Simulación de autenticación (reemplazar con backend real)
@@ -48,11 +50,11 @@ if (savedAuth) {
 // Componente para proteger rutas por rol
 const ProtectedRoute = ({ children, allowedRoles }) => {
   if (!mockAuth.isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={ROUTES.LOGIN} replace />;
   }
   
   if (allowedRoles && !allowedRoles.includes(mockAuth.user.rol)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={ROUTES.HOME} replace />;
   }
   
   return children;
@@ -78,56 +80,85 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={
-            auth.isAuthenticated ? 
-            <Navigate to="/dashboard" replace /> : 
-            <Login onLogin={handleLogin} />
-          } />
+          {/* Ruta de login */}
+          <Route 
+            path={ROUTES.LOGIN} 
+            element={
+              auth.isAuthenticated ? 
+              <Navigate to={ROUTES.HOME} replace /> : 
+              <Login onLogin={handleLogin} />
+            } 
+          />
           
-          <Route path="/dashboard" element={
-            <ProtectedRoute allowedRoles={['admin', 'jefe', 'servicios']}>
-              <Dashboard user={auth.user} onLogout={handleLogout} />
-            </ProtectedRoute>
-          } />
+          {/* Ruta principal del dashboard */}
+          <Route 
+            path={ROUTES.HOME} 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'jefe', 'servicios']}>
+                <Dashboard user={auth.user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Rutas de Jefe de Carrera */}
-          <Route path="/generar-calendario" element={
-            <ProtectedRoute allowedRoles={['jefe']}>
-              <GenerarCalendario user={auth.user} />
-            </ProtectedRoute>
-          } />
+          <Route 
+            path={ROUTES.GENERAR_CALENDARIO} 
+            element={
+              <ProtectedRoute allowedRoles={['jefe']}>
+                <GenerarCalendario user={auth.user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            } 
+          />
           
-          <Route path="/ver-calendario" element={
-            <ProtectedRoute allowedRoles={['jefe', 'servicios']}>
-              <VerCalendario user={auth.user} />
-            </ProtectedRoute>
-          } />
+          <Route 
+            path={ROUTES.VER_CALENDARIO} 
+            element={
+              <ProtectedRoute allowedRoles={['jefe', 'servicios']}>
+                <VerCalendario user={auth.user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            } 
+          />
           
-          <Route path="/modificar-calendario" element={
-            <ProtectedRoute allowedRoles={['jefe']}>
-              <ModificarCalendario user={auth.user} />
-            </ProtectedRoute>
-          } />
+          <Route 
+            path={ROUTES.MODIFICAR_CALENDARIO} 
+            element={
+              <ProtectedRoute allowedRoles={['jefe']}>
+                <ModificarCalendario user={auth.user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            } 
+          />
           
-          <Route path="/gestion-sinodales" element={
-            <ProtectedRoute allowedRoles={['jefe']}>
-              <GestionSinodales user={auth.user} />
-            </ProtectedRoute>
-          } />
+          <Route 
+            path={ROUTES.GESTION_SINODALES} 
+            element={
+              <ProtectedRoute allowedRoles={['jefe']}>
+                <GestionSinodales user={auth.user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Rutas de Administrador */}
-          <Route path="/admin-usuarios" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminUsuarios user={auth.user} />
-            </ProtectedRoute>
-          } />
+          <Route 
+            path={ROUTES.ADMIN_USUARIOS} 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminUsuarios user={auth.user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Rutas de Servicios Escolares */}
-          <Route path="/servicios-escolares" element={
-            <ProtectedRoute allowedRoles={['servicios']}>
-              <ServiciosEscolares user={auth.user} />
-            </ProtectedRoute>
-          } />
+          <Route 
+            path={ROUTES.SERVICIOS_ESCOLARES} 
+            element={
+              <ProtectedRoute allowedRoles={['servicios']}>
+                <ServiciosEscolares user={auth.user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Ruta 404 - debe ir al final */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </Router>

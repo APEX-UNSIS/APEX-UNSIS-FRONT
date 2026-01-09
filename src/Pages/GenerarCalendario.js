@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../routes';
+import Layout from '../components/Layout';
 import './GenerarCalendario.css';
-import unsisImage from '../assets/images/UNSI.png';
 
-const GenerarCalendario = () => {
+const GenerarCalendario = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fechaInicio: '',
@@ -24,62 +25,12 @@ const GenerarCalendario = () => {
   console.log('Datos del formulario:', formData);
   alert('Calendario generado exitosamente');
   // Redirigir a Ver Calendario después de generar
-  navigate('/ver-calendario');
+  navigate(ROUTES.VER_CALENDARIO);
 };
 
-  const handleBackToDashboard = () => {
-    navigate('/dashboard');
-  };
-
   return (
-    <div className="generar-calendario-container">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <img src={unsisImage} alt="UNSIS" className="sidebar-unsis-image" />
-        </div>
-        
-        <nav className="sidebar-nav">
-          <ul className="nav-menu">
-            <li className="nav-item">
-              <a href="#inicio" className="nav-link" onClick={handleBackToDashboard}>
-                Inicio
-              </a>
-            </li>
-            <li className="nav-item active">
-              <a href="#generar-calendario" className="nav-link">
-                Generar Calendario
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#ver-calendario" className="nav-link">
-                Ver Calendario
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#modificar-calendario" className="nav-link">
-                Modificar Calendario
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="#configuracion" className="nav-link">
-                Configuración
-              </a>
-            </li>
-          </ul>
-        </nav>
-
-        <div className="sidebar-footer">
-          <button className="logout-btn" onClick={() => navigate('/')}>
-            Cerrar Sesión
-          </button>
-        </div>
-      </div>
-
-      <div className="main-content">
-        <header className="content-header">
-          <h1 className="content-title">APEX-UNSIS</h1>
-        </header>
-
+    <Layout user={user} onLogout={onLogout}>
+      <div className="generar-calendario-container">
         <div className="content-area">
           <div className="form-section">
             <h2 className="form-title">Generar Nuevo Calendario</h2>
@@ -147,7 +98,7 @@ const GenerarCalendario = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

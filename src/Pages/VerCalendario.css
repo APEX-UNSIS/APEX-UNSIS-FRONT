@@ -1,5 +1,8 @@
 .ver-calendario-container {
+  /* Apilar header y contenido en columna para evitar columnas vacías
+     entre el sidebar y el contenido principal. */
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
   background-color: white;
   font-family: 'Arial', sans-serif;
@@ -7,12 +10,18 @@
 
 /* Sidebar Styles */
 .sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
   width: 280px;
+  height: 100vh;
   background: linear-gradient(180deg, #1E3A8A 0%, #1E40AF 100%);
   color: white;
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow-y: auto;
 }
 
 .sidebar-header {
@@ -108,15 +117,20 @@
   display: flex;
   flex-direction: column;
   background-color: white;
+  margin-left: 280px;
+  min-height: 100vh;
 }
 
 .content-header {
+  position: sticky;
+  top: 0;
   background: #1E3A8A;
   padding: 20px 30px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  z-index: 99;
 }
 
 .content-title {
@@ -136,6 +150,7 @@
   padding: 30px;
   overflow-y: auto;
   background-color: #f8fafc;
+  width: 100%;
 }
 
 .calendario-section {
@@ -328,11 +343,45 @@
 
 
 
+/* Mobile menu toggle */
+.menu-toggle {
+  display: none;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1001;
+  transition: all 0.3s ease;
+}
+
+.menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
+  .sidebar {
+    width: 250px;
+  }
+
+  .main-content {
+    margin-left: 250px;
+  }
+
+  .content-header {
+    left: 250px;
+  }
+
   .table-container {
     overflow-x: auto;
     border-radius: 8px;
+    -webkit-overflow-scrolling: touch;
   }
   
   .calendario-table {
@@ -345,18 +394,69 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .calendario-table {
+    min-width: 1000px;
+  }
+
+  .calendario-table th,
+  .calendario-table td {
+    padding: 12px 10px;
+    font-size: 0.85rem;
+  }
+}
+
 @media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+
   .ver-calendario-container {
     flex-direction: column;
+    position: relative;
   }
   
   .sidebar {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+  }
+
+  .sidebar.open {
+    left: 0;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
+  }
+
+  .sidebar-header {
+    padding-top: 60px;
+  }
+
+  .main-content {
     width: 100%;
-    height: auto;
+    margin-left: 0;
   }
   
   .content-area {
     padding: 20px 15px;
+  }
+
+  .content-header {
+    padding: 15px 20px;
+    padding-left: 60px;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+    left: 0;
+    height: 70px;
+  }
+
+  .content-area {
+    padding-top: 100px;
   }
   
   .calendario-title {
@@ -369,19 +469,79 @@
     max-height: 60px;
   }
   
+  .table-container {
+    border-radius: 8px;
+  }
+
+  .calendario-table {
+    min-width: 900px;
+  }
+
+  .calendario-table th,
+  .calendario-table td {
+    padding: 10px 8px;
+    font-size: 0.8rem;
+  }
+  
   .table-info {
     flex-direction: column;
     gap: 10px;
-    text-align: center;
+    align-items: flex-start;
+    padding: 12px 15px;
+  }
+
+  .table-actions {
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: 10px;
+  }
+
+  .download-btn, .print-btn {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+  }
+
+  .table-actions-bottom {
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px 15px;
+  }
+
+  .enviar-btn, .modificar-btn {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-cancel, .modal-confirm {
+    width: 100%;
   }
 }
 
 @media (max-width: 480px) {
+  .menu-toggle {
+    top: 10px;
+    left: 10px;
+    padding: 8px 12px;
+    font-size: 1rem;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
   .content-header {
-    padding: 15px 20px;
-    flex-direction: column;
-    gap: 10px;
-    text-align: center;
+    padding: 15px 15px;
+    padding-left: 55px;
   }
   
   .content-title {
@@ -390,6 +550,7 @@
   
   .calendario-title {
     font-size: 1.5rem;
+    padding-bottom: 10px;
   }
   
   .sidebar-unsis-image {
@@ -399,6 +560,49 @@
   
   .content-area {
     padding: 15px 10px;
+  }
+
+  .calendario-table {
+    min-width: 800px;
+  }
+
+  .calendario-table th,
+  .calendario-table td {
+    padding: 8px 6px;
+    font-size: 0.75rem;
+  }
+
+  .grupo-cell, .materia-cell, .profesor-cell, .fecha-cell, .hora-cell, .aula-cell {
+    font-size: 0.7rem;
+  }
+
+  .table-actions-bottom {
+    padding: 15px 10px;
+  }
+
+  .modal-content {
+    padding: 20px 15px;
+    width: 98%;
+  }
+}
+
+@media (max-width: 360px) {
+  .calendario-title {
+    font-size: 1.3rem;
+  }
+
+  .content-title {
+    font-size: 1.2rem;
+  }
+
+  .calendario-table {
+    min-width: 750px;
+  }
+
+  .calendario-table th,
+  .calendario-table td {
+    padding: 6px 5px;
+    font-size: 0.7rem;
   }
 }
 /* Botones de acción debajo de la tabla */
