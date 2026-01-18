@@ -19,9 +19,6 @@ import './App.css';
 function AppRoutes() {
   const { isAuthenticated, user, logout } = useAuth();
 
-function AppRoutes() {
-  const { isAuthenticated, user, logout } = useAuth();
-
   return (
     <Routes>
       {/* Ruta de login */}
