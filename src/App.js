@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './config/routes';
 import Login from './components/Login';
@@ -11,71 +11,12 @@ import AdminUsuarios from './Pages/AdminUsuarios';
 import ServiciosEscolares from './Pages/ServiciosEscolares';
 import GestionSinodales from './Pages/GestionSinodales';
 import NotFound from './components/NotFound';
+import ProtectedRoute from './components/ProtectedRoute';
+import { useAuth } from './core/auth/hooks/useAuth';
 import './App.css';
 
-// Simulación de autenticación (reemplazar con backend real)
-const mockAuth = {
-  isAuthenticated: false,
-  user: null,
-  login: (username, password) => {
-    // Simulación de login con diferentes roles
-    const users = {
-      'admin': { id: 1, nombre: 'Administrador', rol: 'admin' },
-      'jefe': { id: 2, nombre: 'Jefe de Carrera', rol: 'jefe' },
-      'servicios': { id: 3, nombre: 'Servicios Escolares', rol: 'servicios' }
-    };
-    
-    if (users[username] && password === '123456') {
-      mockAuth.isAuthenticated = true;
-      mockAuth.user = users[username];
-      localStorage.setItem('auth', JSON.stringify(mockAuth));
-      return true;
-    }
-    return false;
-  },
-  logout: () => {
-    mockAuth.isAuthenticated = false;
-    mockAuth.user = null;
-    localStorage.removeItem('auth');
-  }
-};
-
-// Cargar autenticación desde localStorage
-const savedAuth = localStorage.getItem('auth');
-if (savedAuth) {
-  const parsed = JSON.parse(savedAuth);
-  mockAuth.isAuthenticated = parsed.isAuthenticated;
-  mockAuth.user = parsed.user;
-}
-
-// Componente para proteger rutas por rol
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  if (!mockAuth.isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
-  }
-  
-  if (allowedRoles && !allowedRoles.includes(mockAuth.user.rol)) {
-    return <Navigate to={ROUTES.HOME} replace />;
-  }
-  
-  return children;
-};
-
-function App() {
-  const [auth, setAuth] = useState(mockAuth);
-
-  const handleLogin = (username, password) => {
-    if (mockAuth.login(username, password)) {
-      setAuth({ ...mockAuth });
-      return true;
-    }
-    return false;
-  };
-
-  const handleLogout = () => {
-    mockAuth.logout();
-    setAuth({ ...mockAuth });
-  };
+function AppContent() {
+  const { isAuthenticated, user, logout } = useAuth();
 
   return (
     <Router>
@@ -85,9 +26,9 @@ function App() {
           <Route 
             path={ROUTES.LOGIN} 
             element={
-              auth.isAuthenticated ? 
+              isAuthenticated ? 
               <Navigate to={ROUTES.HOME} replace /> : 
-              <Login onLogin={handleLogin} />
+              <Login />
             } 
           />
           
@@ -96,7 +37,7 @@ function App() {
             path={ROUTES.HOME} 
             element={
               <ProtectedRoute allowedRoles={['admin', 'jefe', 'servicios']}>
-                <Dashboard user={auth.user} onLogout={handleLogout} />
+                <Dashboard user={user} onLogout={logout} />
               </ProtectedRoute>
             } 
           />
@@ -106,7 +47,7 @@ function App() {
             path={ROUTES.GENERAR_CALENDARIO} 
             element={
               <ProtectedRoute allowedRoles={['jefe']}>
-                <GenerarCalendario user={auth.user} onLogout={handleLogout} />
+                <GenerarCalendario user={user} onLogout={logout} />
               </ProtectedRoute>
             } 
           />
@@ -115,7 +56,7 @@ function App() {
             path={ROUTES.VER_CALENDARIO} 
             element={
               <ProtectedRoute allowedRoles={['jefe']}>
-                <VerCalendarioServicios user={auth.user} onLogout={handleLogout} />
+                <VerCalendarioServicios user={user} onLogout={logout} />
               </ProtectedRoute>
             } 
           />
@@ -124,7 +65,7 @@ function App() {
             path={ROUTES.VER_CALENDARIO_SERVICIOS}
             element={
               <ProtectedRoute allowedRoles={['servicios']}>
-                <VerCalendario user={auth.user} onLogout={handleLogout} />
+                <VerCalendario user={user} onLogout={logout} />
               </ProtectedRoute>
             }
           />
@@ -133,7 +74,7 @@ function App() {
             path={ROUTES.MODIFICAR_CALENDARIO} 
             element={
               <ProtectedRoute allowedRoles={['jefe']}>
-                <ModificarCalendario user={auth.user} onLogout={handleLogout} />
+                <ModificarCalendario user={user} onLogout={logout} />
               </ProtectedRoute>
             } 
           />
@@ -142,7 +83,7 @@ function App() {
             path={ROUTES.GESTION_SINODALES} 
             element={
               <ProtectedRoute allowedRoles={['jefe']}>
-                <GestionSinodales user={auth.user} onLogout={handleLogout} />
+                <GestionSinodales user={user} onLogout={logout} />
               </ProtectedRoute>
             } 
           />
@@ -152,7 +93,7 @@ function App() {
             path={ROUTES.ADMIN_USUARIOS} 
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminUsuarios user={auth.user} onLogout={handleLogout} />
+                <AdminUsuarios user={user} onLogout={logout} />
               </ProtectedRoute>
             } 
           />
@@ -162,7 +103,7 @@ function App() {
             path={ROUTES.SERVICIOS_ESCOLARES} 
             element={
               <ProtectedRoute allowedRoles={['servicios']}>
-                <ServiciosEscolares user={auth.user} onLogout={handleLogout} />
+                <ServiciosEscolares user={user} onLogout={logout} />
               </ProtectedRoute>
             } 
           />
@@ -173,6 +114,10 @@ function App() {
       </div>
     </Router>
   );
+}
+
+function App() {
+  return <AppContent />;
 }
 
 export default App;

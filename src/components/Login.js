@@ -1,29 +1,37 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../core/auth/hooks/useAuth';
 import { ROUTES } from '../config/routes';
 import './Login.css';
 import unsisImage from '../assets/images/UNSI.png';
 import apexImage from '../assets/images/logo.png';
 
-const Login = ({ onLogin }) => {
+const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     
     if (username && password) {
-      if (onLogin(username, password)) {
+      const result = await login(username, password);
+      
+      if (result.success) {
         navigate(ROUTES.HOME);
       } else {
-        setError('Usuario o contraseña incorrectos');
+        setError(result.error || 'Usuario o contraseña incorrectos');
       }
     } else {
       setError('Por favor ingresa usuario y contraseña');
     }
+    
+    setLoading(false);
   };
 
  
@@ -78,8 +86,8 @@ const Login = ({ onLogin }) => {
                 </a>
               </div>
 
-              <button type="submit" className="login-button">
-                Iniciar Sesión
+              <button type="submit" className="login-button" disabled={loading}>
+                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </button>
               
              
