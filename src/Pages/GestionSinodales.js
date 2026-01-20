@@ -1,96 +1,160 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../config/routes';
 import Layout from '../components/Layout';
 import './GestionSinodales.css';
 import { GraduateIcon, TrashIcon } from '../icons';
+import horarioService from '../core/services/horarioService';
+import materiaService from '../core/services/materiaService';
+import profesorService from '../core/services/profesorService';
+import permisoService from '../core/services/permisoService';
+import asignacionSinodalService from '../core/services/asignacionSinodalService';
 
 const GestionSinodales = ({ user, onLogout }) => {
   const navigate = useNavigate();
-  const [materias, setMaterias] = useState([
-    {
-      id: 1,
-      nombre: "Tecnologias Web II",
-      grupo: "706",
-      sinodalAsignado: { id: 1, nombre: "Mtro. Irving Ulises Hernandez Miguel" },
-      sinodalesDisponibles: [
-        { id: 1, nombre: "Mtro. Irving Ulises Hernandez Miguel", disponible: true },
-        { id: 2, nombre: "Dr. Juan Pérez", disponible: true },
-        { id: 3, nombre: "Mtra. Ana García", disponible: true }
-      ]
-    },
-    {
-      id: 2,
-      nombre: "Bases de Datos avanzadas",
-      grupo: "706",
-      sinodalAsignado: { id: 2, nombre: "Dr. Juan Pérez" },
-      sinodalesDisponibles: [
-        { id: 1, nombre: "Mtro. Irving Ulises Hernandez Miguel", disponible: false },
-        { id: 2, nombre: "Dr. Juan Pérez", disponible: true },
-        { id: 3, nombre: "Mtra. Ana García", disponible: true },
-        { id: 4, nombre: "Dr. Carlos Rodríguez", disponible: true }
-      ]
-    },
-    {
-      id: 3,
-      nombre: "Ingenieria de software II",
-      grupo: "706",
-      sinodalAsignado: null,
-      sinodalesDisponibles: [
-        { id: 1, nombre: "Mtro. Irving Ulises Hernandez Miguel", disponible: false },
-        { id: 2, nombre: "Dr. Juan Pérez", disponible: false },
-        { id: 3, nombre: "Mtra. Ana García", disponible: true },
-        { id: 5, nombre: "Dr. Eric Melesio Castro Leal", disponible: true }
-      ]
-    },
-    {
-      id: 4,
-      nombre: "Probabilidad y estadistica",
-      grupo: "706",
-      sinodalAsignado: { id: 6, nombre: "Dr. Alejandro Jarillo Silva" },
-      sinodalesDisponibles: [
-        { id: 6, nombre: "Dr. Alejandro Jarillo Silva", disponible: true },
-        { id: 7, nombre: "Mtra. Laura Martínez", disponible: true }
-      ]
-    },
-    {
-      id: 5,
-      nombre: "Derecho y Legislacion",
-      grupo: "706",
-      sinodalAsignado: { id: 8, nombre: "Dr. Gerardo Aragon Gonzales" },
-      sinodalesDisponibles: [
-        { id: 8, nombre: "Dr. Gerardo Aragon Gonzales", disponible: true },
-        { id: 9, nombre: "Mtro. Luis Sánchez", disponible: true }
-      ]
-    }
-  ]);
-
-  const [sinodalesDisponibles, setSinodalesDisponibles] = useState([
-    { id: 1, nombre: "Mtro. Irving Ulises Hernandez Miguel", materiasAsignadas: 1, disponible: false },
-    { id: 2, nombre: "Dr. Juan Pérez", materiasAsignadas: 1, disponible: false },
-    { id: 3, nombre: "Mtra. Ana García", materiasAsignadas: 0, disponible: true },
-    { id: 4, nombre: "Dr. Carlos Rodríguez", materiasAsignadas: 0, disponible: true },
-    { id: 5, nombre: "Dr. Eric Melesio Castro Leal", materiasAsignadas: 0, disponible: true },
-    { id: 6, nombre: "Dr. Alejandro Jarillo Silva", materiasAsignadas: 1, disponible: false },
-    { id: 7, nombre: "Mtra. Laura Martínez", materiasAsignadas: 0, disponible: true },
-    { id: 8, nombre: "Dr. Gerardo Aragon Gonzales", materiasAsignadas: 1, disponible: false },
-    { id: 9, nombre: "Mtro. Luis Sánchez", materiasAsignadas: 0, disponible: true }
-  ]);
-
+  const [materias, setMaterias] = useState([]);
+  const [sinodalesDisponibles, setSinodalesDisponibles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showAgregarSinodal, setShowAgregarSinodal] = useState(false);
   const [nuevoSinodal, setNuevoSinodal] = useState({ nombre: '', email: '', telefono: '' });
 
+  // Validar que el usuario tenga carrera asignada
+  useEffect(() => {
+    if (!user || !user.id_carrera) {
+      setError('No tienes una carrera asignada. Solo los jefes de carrera pueden gestionar sinodales.');
+      setLoading(false);
+      return;
+    }
+    
+    loadData();
+  }, [user]);
 
-  const handleAsignarSinodal = (materiaId, sinodalId) => {
-    const sinodal = sinodalesDisponibles.find(s => s.id === sinodalId);
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      if (!user || !user.id_carrera) {
+        return;
+      }
+
+      // Cargar horarios de la carrera (que incluyen materias y grupos)
+      const horarios = await horarioService.getByCarrera(user.id_carrera);
+      
+      // Cargar profesores/sinodales de la carrera
+      const profesoresSinodales = await profesorService.getSinodalesByCarrera(user.id_carrera);
+      
+      // Cargar todas las asignaciones sinodales existentes
+      const asignaciones = await asignacionSinodalService.getAll();
+      
+      // Cargar solicitudes de examen para mapear asignaciones con materias
+      // Por ahora, usamos las asignaciones directamente
+      
+      // Procesar los datos para crear la estructura de materias
+      const materiasMap = new Map();
+      
+      horarios.forEach((horario) => {
+        const materiaId = horario.id_materia || horario.materia?.id_materia;
+        if (!materiaId) return;
+        
+        const materiaNombre = horario.materia?.nombre_materia || 'Materia sin nombre';
+        const grupoNombre = horario.grupo?.nombre_grupo || horario.id_grupo || 'Sin grupo';
+        const idGrupo = horario.id_grupo || horario.grupo?.id_grupo;
+        
+        if (!materiasMap.has(materiaId)) {
+          materiasMap.set(materiaId, {
+            id_materia: materiaId,
+            nombre: materiaNombre,
+            grupos: new Set([grupoNombre]),
+            id_grupos: new Set([idGrupo]),
+            horarios: [horario]
+          });
+        } else {
+          const materia = materiasMap.get(materiaId);
+          materia.grupos.add(grupoNombre);
+          if (idGrupo) materia.id_grupos.add(idGrupo);
+          materia.horarios.push(horario);
+        }
+      });
+      
+      // Convertir el Map a array y agregar información de sinodales
+      const materiasData = Array.from(materiasMap.values()).map(materia => {
+        // Buscar si hay una asignación sinodal para algún horario de esta materia
+        // Por ahora, asumimos que necesitamos un horario_id de solicitud
+        let sinodalAsignado = null;
+        
+        // Obtener sinodales con permisos para esta materia específica
+        // Todos los profesores con permisos sinodales de la carrera están disponibles
+        const sinodalesDisponibles = profesoresSinodales.map(p => {
+          const asignacionesCount = asignaciones.filter(a => 
+            a.id_profesor === p.id_profesor
+          ).length;
+          
+          return {
+            id_profesor: p.id_profesor,
+            nombre: p.nombre_profesor,
+            disponible: asignacionesCount < 3 // Límite de 3 materias
+          };
+        });
+        
+        return {
+          id_materia: materia.id_materia,
+          nombre: materia.nombre,
+          grupo: Array.from(materia.grupos).join(', '), // Mostrar todos los grupos
+          grupos: Array.from(materia.grupos),
+          id_grupos: Array.from(materia.id_grupos),
+          horarios: materia.horarios,
+          sinodalAsignado: sinodalAsignado,
+          sinodalesDisponibles: sinodalesDisponibles
+        };
+      });
+      
+      setMaterias(materiasData);
+      
+      // Configurar sinodales disponibles (conteo general)
+      const sinodalesData = profesoresSinodales.map(profesor => {
+        // Contar cuántas asignaciones tiene este profesor
+        const asignacionesCount = asignaciones.filter(a => 
+          a.id_profesor === profesor.id_profesor
+        ).length;
+        
+        return {
+          id_profesor: profesor.id_profesor,
+          nombre: profesor.nombre_profesor,
+          materiasAsignadas: asignacionesCount,
+          disponible: asignacionesCount < 3 // Límite de 3 materias
+        };
+      });
+      
+      setSinodalesDisponibles(sinodalesData);
+    } catch (err) {
+      console.error('Error cargando datos:', err);
+      setError('Error al cargar los datos. Por favor, intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleAsignarSinodal = async (materiaId, sinodalId) => {
+    if (!sinodalId || sinodalId === '') {
+      return;
+    }
+
+    const sinodal = sinodalesDisponibles.find(s => s.id_profesor === sinodalId);
     if (!sinodal) return;
 
+    // Buscar un horario/solicitud para esta materia
+    // Por ahora, solo actualizamos el estado local
+    // TODO: Implementar creación de asignación sinodal en el backend
+    
     setMaterias(materias.map(materia => {
-      if (materia.id === materiaId) {
+      if (materia.id_materia === materiaId) {
         // Quitar disponibilidad del sinodal anterior si existía
         if (materia.sinodalAsignado) {
           setSinodalesDisponibles(sinodalesDisponibles.map(s => 
-            s.id === materia.sinodalAsignado.id 
+            s.id_profesor === materia.sinodalAsignado.id_profesor 
               ? { ...s, materiasAsignadas: s.materiasAsignadas - 1, disponible: s.materiasAsignadas - 1 < 3 }
               : s
           ));
@@ -98,7 +162,7 @@ const GestionSinodales = ({ user, onLogout }) => {
 
         // Actualizar disponibilidad del nuevo sinodal
         setSinodalesDisponibles(sinodalesDisponibles.map(s => 
-          s.id === sinodalId 
+          s.id_profesor === sinodalId 
             ? { ...s, materiasAsignadas: s.materiasAsignadas + 1, disponible: s.materiasAsignadas + 1 < 3 }
             : s
         ));
@@ -112,22 +176,29 @@ const GestionSinodales = ({ user, onLogout }) => {
     }));
   };
 
-  const handleRemoverSinodal = (materiaId) => {
-    setMaterias(materias.map(materia => {
-      if (materia.id === materiaId && materia.sinodalAsignado) {
+  const handleRemoverSinodal = async (materiaId) => {
+    const materia = materias.find(m => m.id_materia === materiaId);
+    if (!materia || !materia.sinodalAsignado) {
+      return;
+    }
+
+    // TODO: Implementar eliminación de asignación sinodal en el backend
+    
+    setMaterias(materias.map(m => {
+      if (m.id_materia === materiaId) {
         // Restaurar disponibilidad del sinodal
         setSinodalesDisponibles(sinodalesDisponibles.map(s => 
-          s.id === materia.sinodalAsignado.id 
+          s.id_profesor === m.sinodalAsignado.id_profesor 
             ? { ...s, materiasAsignadas: s.materiasAsignadas - 1, disponible: s.materiasAsignadas - 1 < 3 }
             : s
         ));
 
         return {
-          ...materia,
+          ...m,
           sinodalAsignado: null
         };
       }
-      return materia;
+      return m;
     }));
   };
 
@@ -156,18 +227,18 @@ const GestionSinodales = ({ user, onLogout }) => {
   const handleEliminarSinodal = (sinodalId) => {
     if (window.confirm('¿Estás seguro de eliminar este sinodal?')) {
       // Verificar si el sinodal está asignado a alguna materia
-      const materiasConSinodal = materias.filter(m => m.sinodalAsignado?.id === sinodalId);
+      const materiasConSinodal = materias.filter(m => m.sinodalAsignado?.id_profesor === sinodalId);
       if (materiasConSinodal.length > 0) {
         alert('No se puede eliminar el sinodal porque está asignado a materias');
         return;
       }
 
-      setSinodalesDisponibles(sinodalesDisponibles.filter(s => s.id !== sinodalId));
+      setSinodalesDisponibles(sinodalesDisponibles.filter(s => s.id_profesor !== sinodalId));
       
       // Actualizar las listas de sinodales disponibles en las materias
       setMaterias(materias.map(materia => ({
         ...materia,
-        sinodalesDisponibles: materia.sinodalesDisponibles.filter(s => s.id !== sinodalId)
+        sinodalesDisponibles: materia.sinodalesDisponibles.filter(s => s.id_profesor !== sinodalId)
       })));
     }
   };
@@ -189,6 +260,26 @@ const GestionSinodales = ({ user, onLogout }) => {
               )}
             </div>
 
+            {error && (
+              <div style={{ 
+                background: '#FEE2E2', 
+                color: '#991B1B', 
+                padding: '12px', 
+                borderRadius: '6px', 
+                marginBottom: '20px' 
+              }}>
+                {error}
+              </div>
+            )}
+
+            {loading && (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <p>Cargando materias y sinodales...</p>
+              </div>
+            )}
+
+            {!loading && (
+              <>
             {/* Estadísticas */}
             {user?.rol !== 'jefe' && (
             <div className="estadisticas-sinodales">
@@ -224,64 +315,71 @@ const GestionSinodales = ({ user, onLogout }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {materias.map((materia) => (
-                    <tr key={materia.id}>
-                      <td className="materia-cell">{materia.nombre}</td>
-                      <td className="grupo-cell">{materia.grupo}</td>
-                      <td className="sinodal-asignado-cell">
-                        {materia.sinodalAsignado ? (
-                          <div className="sinodal-info">
-                            <span className="sinodal-nombre">{materia.sinodalAsignado.nombre}</span>
-                            <button 
-                              className="remover-btn"
-                              onClick={() => handleRemoverSinodal(materia.id)}
-                            >
-                              <TrashIcon style={{marginRight:8}}/>Remover
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="sin-asignado">Sin sinodal asignado</span>
-                        )}
-                      </td>
-                      <td className="sinodales-disponibles-cell">
-                        <select
-                          className="sinodal-select"
-                          value={materia.sinodalAsignado?.id || ''}
-                          onChange={(e) => handleAsignarSinodal(materia.id, parseInt(e.target.value))}
-                        >
-                          <option value="">Seleccionar sinodal...</option>
-                          {sinodalesDisponibles
-                            .filter(s => s.disponible || s.id === materia.sinodalAsignado?.id)
-                            .map((sinodal) => (
-                              <option 
-                                key={sinodal.id} 
-                                value={sinodal.id}
-                                disabled={!sinodal.disponible && sinodal.id !== materia.sinodalAsignado?.id}
-                              >
-                                {sinodal.nombre} 
-                                {!sinodal.disponible && sinodal.id !== materia.sinodalAsignado?.id && ' (No disponible)'}
-                                {sinodal.materiasAsignadas > 0 && ` (${sinodal.materiasAsignadas} materias)`}
-                              </option>
-                            ))
-                          }
-                        </select>
-                      </td>
-                      <td className="acciones-cell">
-                        <button 
-                          className="asignar-btn"
-                          onClick={() => {
-                            const sinodalDisponible = sinodalesDisponibles.find(s => s.disponible);
-                            if (sinodalDisponible) {
-                              handleAsignarSinodal(materia.id, sinodalDisponible.id);
-                            }
-                          }}
-                          disabled={!sinodalesDisponibles.some(s => s.disponible)}
-                        >
-                          <GraduateIcon style={{marginRight:8}}/>Asignar Automático
-                        </button>
+                  {materias.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                        {loading ? 'Cargando materias...' : 'No hay materias para tu carrera'}
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    materias.map((materia) => (
+                      <tr key={materia.id_materia}>
+                        <td className="materia-cell">{materia.nombre}</td>
+                        <td className="grupo-cell">{materia.grupo}</td>
+                        <td className="sinodal-asignado-cell">
+                          {materia.sinodalAsignado ? (
+                            <div className="sinodal-info">
+                              <span className="sinodal-nombre">{materia.sinodalAsignado.nombre}</span>
+                              <button 
+                                className="remover-btn"
+                                onClick={() => handleRemoverSinodal(materia.id_materia)}
+                              >
+                                <TrashIcon style={{marginRight:8}}/>Remover
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="sin-asignado">Sin sinodal asignado</span>
+                          )}
+                        </td>
+                        <td className="sinodales-disponibles-cell">
+                          <select
+                            className="sinodal-select"
+                            value={materia.sinodalAsignado?.id_profesor || ''}
+                            onChange={(e) => handleAsignarSinodal(materia.id_materia, e.target.value)}
+                          >
+                            <option value="">Seleccionar sinodal...</option>
+                            {materia.sinodalesDisponibles
+                              .filter(s => s.disponible || s.id_profesor === materia.sinodalAsignado?.id_profesor)
+                              .map((sinodal) => (
+                                <option 
+                                  key={sinodal.id_profesor} 
+                                  value={sinodal.id_profesor}
+                                  disabled={!sinodal.disponible && sinodal.id_profesor !== materia.sinodalAsignado?.id_profesor}
+                                >
+                                  {sinodal.nombre} 
+                                  {!sinodal.disponible && sinodal.id_profesor !== materia.sinodalAsignado?.id_profesor && ' (No disponible)'}
+                                </option>
+                              ))
+                            }
+                          </select>
+                        </td>
+                        <td className="acciones-cell">
+                          <button 
+                            className="asignar-btn"
+                            onClick={() => {
+                              const sinodalDisponible = sinodalesDisponibles.find(s => s.disponible);
+                              if (sinodalDisponible) {
+                                handleAsignarSinodal(materia.id_materia, sinodalDisponible.id_profesor);
+                              }
+                            }}
+                            disabled={!sinodalesDisponibles.some(s => s.disponible)}
+                          >
+                            <GraduateIcon style={{marginRight:8}}/>Asignar Automático
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -291,33 +389,40 @@ const GestionSinodales = ({ user, onLogout }) => {
             <div className="lista-sinodales">
               <h3 className="lista-title">Sinodales Disponibles</h3>
               <div className="sinodales-grid">
-                {sinodalesDisponibles.map((sinodal) => (
-                  <div key={sinodal.id} className="sinodal-card">
-                    <div className="sinodal-header">
-                      <h4>{sinodal.nombre}</h4>
-                      <span className={`disponibilidad-badge ${sinodal.disponible ? 'disponible' : 'no-disponible'}`}>
-                        {sinodal.disponible ? 'Disponible' : 'No disponible'}
-                      </span>
+                {sinodalesDisponibles.length === 0 ? (
+                  <p style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
+                    No hay sinodales disponibles para tu carrera
+                  </p>
+                ) : (
+                  sinodalesDisponibles.map((sinodal) => (
+                    <div key={sinodal.id_profesor} className="sinodal-card">
+                      <div className="sinodal-header">
+                        <h4>{sinodal.nombre}</h4>
+                        <span className={`disponibilidad-badge ${sinodal.disponible ? 'disponible' : 'no-disponible'}`}>
+                          {sinodal.disponible ? 'Disponible' : 'No disponible'}
+                        </span>
+                      </div>
+                      <div className="sinodal-info">
+                        <p><strong>Matrícula:</strong> {sinodal.id_profesor}</p>
+                        <p><strong>Materias asignadas:</strong> {sinodal.materiasAsignadas}</p>
+                        <p><strong>Límite:</strong> {sinodal.materiasAsignadas}/3 materias</p>
+                      </div>
+                      <div className="sinodal-actions">
+                        <button 
+                          className="eliminar-sinodal-btn"
+                          onClick={() => handleEliminarSinodal(sinodal.id_profesor)}
+                          disabled={sinodal.materiasAsignadas > 0}
+                        >
+                          <TrashIcon style={{marginRight:8}}/>Eliminar
+                        </button>
+                      </div>
                     </div>
-                    <div className="sinodal-info">
-                      {sinodal.email && <p><strong>Email:</strong> {sinodal.email}</p>}
-                      {sinodal.telefono && <p><strong>Teléfono:</strong> {sinodal.telefono}</p>}
-                      <p><strong>Materias asignadas:</strong> {sinodal.materiasAsignadas}</p>
-                      <p><strong>Límite:</strong> {sinodal.materiasAsignadas}/3 materias</p>
-                    </div>
-                    <div className="sinodal-actions">
-                      <button 
-                        className="eliminar-sinodal-btn"
-                        onClick={() => handleEliminarSinodal(sinodal.id)}
-                        disabled={sinodal.materiasAsignadas > 0}
-                      >
-                        <TrashIcon style={{marginRight:8}}/>Eliminar
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
+            )}
+              </>
             )}
           </div>
         </div>
