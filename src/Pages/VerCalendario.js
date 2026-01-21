@@ -1,109 +1,165 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DownloadIcon } from '../icons';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../config/routes';
 import Layout from '../components/Layout';
+import calendarioService from '../core/services/calendarioService';
 import './VerCalendario.css';
 
 const VerCalendario = ({ user, onLogout }) => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [calendarios, setCalendarios] = useState([
-    {
-      id: 1,
-      carrera: 'Ingeniería en Sistemas',
-      jefe: 'Mtro. Juan Pérez',
-      fechaEnvio: '2025-01-15',
-      estado: 'pendiente',
-      horarios: [
-        { grupo: '706', materia: 'Tecnologias Web II', profesor: 'Mtro. Irving Ulises Hernandez Miguel', fecha: '02/12/2025', hora: '8:00-9:00', aula: 'Lab. Tecnologias web' },
-        { grupo: '706', materia: 'Bases de Datos avanzadas', profesor: 'Mtro. Eliezer alcazar Silva', fecha: '03/12/2025', hora: '17:00-18:00', aula: 'Lab. Ingenieria de software' },
-      ]
-    },
-    {
-      id: 2,
-      carrera: 'Administración',
-      jefe: 'Mtro. María García',
-      fechaEnvio: '2025-01-10',
-      estado: 'revisado',
-      horarios: [
-        { grupo: '502', materia: 'Contabilidad intermedia', profesor: 'Mtra. Ana Ruiz', fecha: '03/12/2025', hora: '10:00-11:00', aula: 'Aula 12' }
-      ]
-    },
-  ]);
-  const [selectedCalendar, setSelectedCalendar] = useState(calendarios[0]);
+  const [loading, setLoading] = useState(true);
+  const [examenes, setExamenes] = useState([]);
+  const [error, setError] = useState(null);
 
+  useEffect(() => {
+    cargarCalendario();
+  }, []);
 
-  const handleDownload = (cal) => {
-    alert(`Calendario "${cal.carrera}" descargado exitosamente`);
+  const cargarCalendario = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Cargando calendario...');
+      const data = await calendarioService.obtener();
+      console.log('Datos recibidos:', data);
+      setExamenes(data || []);
+    } catch (err) {
+      console.error('Error cargando calendario:', err);
+      console.error('Detalles del error:', err.response?.data || err.message);
+      setError(`Error al cargar el calendario: ${err.response?.data?.detail || err.message || 'Error desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-
-  const openCalendar = (cal) => {
-    setSelectedCalendar(cal);
+  const handleDownload = () => {
+    alert('Funcionalidad de descarga próximamente disponible');
   };
 
-  const horarios = [
-    {
-      grupo: "706",
-      materia: "Tecnologias Web II",
-      profesor: "Mtro. Irving Ulises Hernandez Miguel",
-      fecha: "02/12/2025",
-      hora: "8:00-9:00",
-      aula: "Lab. Tecnologias web"
-    },
-    {
-      grupo: "706",
-      materia: "Bases de Datos avanzadas",
-      profesor: "Mtro. Eliezer alcazar Silva",
-      fecha: "03/12/2025",
-      hora: "17:00-18:00",
-      aula: "Lab. Ingenieria de software"
-    },
-    {
-      grupo: "706",
-      materia: "Ingenieria de software II",
-      profesor: "DR. Eric Melesio Castro Leal",
-      fecha: "04/12/2025",
-      hora: "11:00-12:00",
-      aula: "Lab. Ingenieria de software"
-    },
-    {
-      grupo: "706",
-      materia: "Probabilidad y estadistica",
-      profesor: "Dr. Alejandro jarillo Silva",
-      fecha: "05/12/2025",
-      hora: "8:00-9:00",
-      aula: "Redes"
-    },
-    {
-      grupo: "706",
-      materia: "Derecho y Legislacion",
-      profesor: "Dr. Gerardo Aragon Gonzales",
-      fecha: "01/21/2025",
-      hora: "8:00-9:00",
-      aula: "Redes"
-    },
-  ];
+  // Agrupar exámenes por grupo
+  const agruparPorGrupo = () => {
+    const gruposMap = {};
+    examenes.forEach(examen => {
+      // Asegurar que grupos sea un array
+      const gruposArray = Array.isArray(examen.grupos) ? examen.grupos : [];
+      gruposArray.forEach(grupo => {
+        if (!gruposMap[grupo]) {
+          gruposMap[grupo] = [];
+        }
+        gruposMap[grupo].push({
+          ...examen,
+          grupo: grupo
+        });
+      });
+    });
+    return gruposMap;
+  };
+
+  const gruposExamenes = agruparPorGrupo();
+  const grupos = Object.keys(gruposExamenes).sort();
+  
+  // Debug: mostrar datos en consola
+  useEffect(() => {
+    if (examenes.length > 0) {
+      console.log('Exámenes cargados:', examenes);
+      console.log('Grupos encontrados:', grupos);
+    }
+  }, [examenes, grupos]);
+
+  if (loading) {
+    return (
+      <Layout user={user} onLogout={onLogout}>
+        <div className="ver-calendario-container">
+          <div className="content-area">
+            <div className="calendario-section">
+              <h2 className="calendario-title">Calendario de Exámenes</h2>
+              <p>Cargando calendario...</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout user={user} onLogout={onLogout}>
+        <div className="ver-calendario-container">
+          <div className="content-area">
+            <div className="calendario-section">
+              <h2 className="calendario-title">Calendario de Exámenes</h2>
+              <div style={{ color: 'red', marginTop: '20px' }}>{error}</div>
+              <button onClick={cargarCalendario} style={{ marginTop: '10px' }}>
+                Reintentar
+              </button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (examenes.length === 0) {
+    return (
+      <Layout user={user} onLogout={onLogout}>
+        <div className="ver-calendario-container">
+          <div className="content-area">
+            <div className="calendario-section">
+              <h2 className="calendario-title">Calendario de Exámenes</h2>
+              <p style={{ marginTop: '20px' }}>No hay exámenes programados para tu carrera.</p>
+              <button 
+                onClick={() => navigate(ROUTES.GENERAR_CALENDARIO)} 
+                style={{ marginTop: '10px', padding: '10px 20px' }}
+              >
+                Generar Calendario
+              </button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout user={user} onLogout={onLogout}>
       <div className="ver-calendario-container">
         <div className="content-area">
           <div className="calendario-section">
-            <h2 className="calendario-title">Exámenes 2025</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 className="calendario-title">Calendario de Exámenes</h2>
+              <button className="download-btn" onClick={handleDownload}>
+                <DownloadIcon style={{marginRight:8}}/>Descargar
+              </button>
+            </div>
             
-            <div className="calendarios-list">
-              {calendarios.map((c) => (
-                <div key={c.id} className={`calendario-card ${selectedCalendar && selectedCalendar.id === c.id ? 'selected' : ''}`} onClick={() => openCalendar(c)}>
-                  <h3>{c.carrera}</h3>
-                  <p><strong>Jefe:</strong> {c.jefe}</p>
-                  <p><strong>Enviado:</strong> {c.fechaEnvio}</p>
-                  <p><strong>Estado:</strong> {c.estado}</p>
-                  <div style={{marginTop:8}}>
-                    <button className="download-btn" onClick={(e) => { e.stopPropagation(); handleDownload(c); }}>
-                      <DownloadIcon style={{marginRight:8}}/>Descargar
-                    </button>
+            <div className="groups-grid">
+              {grupos.map((grupo) => (
+                <div key={grupo} className="group-card">
+                  <h3>Grupo {grupo}</h3>
+                  <div className="table-container">
+                    <table className="calendario-table">
+                      <thead>
+                        <tr>
+                          <th>MATERIA</th>
+                          <th>MAESTRO TITULAR</th>
+                          <th>FECHA</th>
+                          <th>HORA</th>
+                          <th>AULA</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {gruposExamenes[grupo].map((examen, i) => (
+                          <tr key={i}>
+                            <td className="materia-cell">{examen.materia || 'N/A'}</td>
+                            <td className="profesor-cell">{examen.profesor || 'N/A'}</td>
+                            <td className="fecha-cell">{examen.fecha || 'N/A'}</td>
+                            <td className="hora-cell">{examen.hora || 'N/A'}</td>
+                            <td className="aula-cell">{examen.aula || 'N/A'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               ))}

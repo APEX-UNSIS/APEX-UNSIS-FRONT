@@ -56,7 +56,7 @@ function AppContent() {
             path={ROUTES.VER_CALENDARIO} 
             element={
               <ProtectedRoute allowedRoles={['jefe']}>
-                <VerCalendarioServicios user={user} onLogout={logout} />
+                <VerCalendario user={user} onLogout={logout} />
               </ProtectedRoute>
             } 
           />
@@ -65,7 +65,7 @@ function AppContent() {
             path={ROUTES.VER_CALENDARIO_SERVICIOS}
             element={
               <ProtectedRoute allowedRoles={['servicios']}>
-                <VerCalendario user={user} onLogout={logout} />
+                <VerCalendarioServicios user={user} onLogout={logout} />
               </ProtectedRoute>
             }
           />

@@ -1,96 +1,90 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EyeIcon, EditIcon, SaveIcon, TrashIcon, LogoutIcon } from '../icons';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../config/routes';
 import Layout from '../components/Layout';
+import calendarioService from '../core/services/calendarioService';
 import './ModificarCalendario.css';
 
 const ModificarCalendario = ({ user, onLogout }) => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [examenes, setExamenes] = useState([]);
+  const [error, setError] = useState(null);
   
-  const [calendario, setCalendario] = useState({
-    id: 1,
-    carrera: "Ingeniería en Sistemas",
-    grupo: "706",
-    periodo: "Enero-Junio 2025",
-    fechaGeneracion: "2025-01-10",
-    estado: "borrador",
-    horarios: [
-      {
-        id: 1,
-        materia: "Tecnologias Web II",
-        profesor: "Mtro. Irving Ulises Hernandez Miguel",
-        fecha: "02/12/2025",
-        hora: "8:00-9:00",
-        aula: "Lab. Tecnologias web",
-        sinodal: "Mtro. Irving Ulises Hernandez Miguel"
-      },
-      {
-        id: 2,
-        materia: "Bases de Datos avanzadas",
-        profesor: "Mtro. Eliezer Alcazar Silva",
-        fecha: "03/12/2025",
-        hora: "17:00-18:00",
-        aula: "Lab. Ingenieria de software",
-        sinodal: "Dr. Juan Pérez"
-      },
-      {
-        id: 3,
-        materia: "Ingenieria de software II",
-        profesor: "DR. Eric Melesio Castro Leal",
-        fecha: "04/12/2025",
-        hora: "11:00-12:00",
-        aula: "Lab. Ingenieria de software",
-        sinodal: null
-      },
-      {
-        id: 4,
-        materia: "Probabilidad y estadistica",
-        profesor: "Dr. Alejandro Jarillo Silva",
-        fecha: "05/12/2025",
-        hora: "8:00-9:00",
-        aula: "Redes",
-        sinodal: "Dr. Alejandro Jarillo Silva"
-      },
-      {
-        id: 5,
-        materia: "Derecho y Legislacion",
-        profesor: "Dr. Gerardo Aragon Gonzales",
-        fecha: "01/21/2025",
-        hora: "8:00-9:00",
-        aula: "Redes",
-        sinodal: "Dr. Gerardo Aragon Gonzales"
-      }
-    ]
-  });
-
-  // editando: null | { group: string, id: number }
+  // editando: null | { grupo: string, id_horario: string }
   const [editando, setEditando] = useState(null);
   const [formData, setFormData] = useState({});
   const [showConfirm, setShowConfirm] = useState(false);
   const [accionConfirmar, setAccionConfirmar] = useState('');
 
-  // Estado local para filas de cada grupo (demo). Cada grupo tiene su propio arreglo de horarios.
-  const grupos = ['106','306','506','706','906'];
-  const sampleRows = [
-    { id: 1, materia: 'Tecnologias Web II', profesor: 'Mtro. Irving Ulises Hernandez Miguel', fecha: '02/12/2025', hora: '8:00-9:00', aula: 'Lab. Tecnologias web' },
-    { id: 2, materia: 'Bases de Datos avanzadas', profesor: 'Mtro. Eliezer alcazar Silva', fecha: '03/12/2025', hora: '17:00-18:00', aula: 'Lab. Ingenieria de software' },
-    { id: 3, materia: 'Ingenieria de software II', profesor: 'DR. Eric Melesio Castro Leal', fecha: '04/12/2025', hora: '11:00-12:00', aula: 'Lab. Ingenieria de software' }
-  ];
+  useEffect(() => {
+    cargarCalendario();
+  }, []);
 
-  const [groupRows, setGroupRows] = useState(() => {
-    const obj = {};
-    grupos.forEach((g) => {
-      // clone sampleRows with ids offset per group to avoid collisions
-      obj[g] = sampleRows.map((r, i) => ({ ...r, id: i + 1 }));
+  const cargarCalendario = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Cargando calendario para modificar...');
+      const data = await calendarioService.obtener();
+      console.log('Datos recibidos:', data);
+      setExamenes(data || []);
+    } catch (err) {
+      console.error('Error cargando calendario:', err);
+      console.error('Detalles del error:', err.response?.data || err.message);
+      setError(`Error al cargar el calendario: ${err.response?.data?.detail || err.message || 'Error desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Agrupar exámenes por grupo
+  const agruparPorGrupo = () => {
+    const gruposMap = {};
+    examenes.forEach(examen => {
+      const gruposArray = Array.isArray(examen.grupos) ? examen.grupos : [];
+      gruposArray.forEach(grupo => {
+        if (!gruposMap[grupo]) {
+          gruposMap[grupo] = [];
+        }
+        gruposMap[grupo].push({
+          ...examen,
+          grupo: grupo
+        });
+      });
     });
-    return obj;
-  });
+    return gruposMap;
+  };
+
+  const gruposExamenes = agruparPorGrupo();
+  const grupos = Object.keys(gruposExamenes).sort();
 
 
-  const handleEditarHorario = (horario, group) => {
-    setEditando({ group, id: horario.id });
-    setFormData({ ...horario });
+  const handleEditarHorario = (examen, grupo) => {
+    setEditando({ grupo, id_horario: examen.id_horario });
+    // Convertir fecha de DD/MM/YYYY a YYYY-MM-DD para el input date
+    let fechaFormato = '';
+    if (examen.fecha) {
+      const [dia, mes, anio] = examen.fecha.split('/');
+      fechaFormato = `${anio}-${mes}-${dia}`;
+    }
+    // Convertir hora de "HH:MM-HH:MM" a formato separado
+    let horaInicio = '';
+    let horaFin = '';
+    if (examen.hora) {
+      const [inicio, fin] = examen.hora.split('-');
+      horaInicio = inicio || '';
+      horaFin = fin || '';
+    }
+    setFormData({
+      materia: examen.materia || '',
+      profesor: examen.profesor || '',
+      fecha: fechaFormato,
+      horaInicio: horaInicio,
+      horaFin: horaFin,
+      aula: examen.aula || ''
+    });
   };
 
   const handleCancelarEdicion = () => {
@@ -98,24 +92,47 @@ const ModificarCalendario = ({ user, onLogout }) => {
     setFormData({});
   };
 
-  const handleGuardarCambios = () => {
+  const handleGuardarCambios = async () => {
     if (!editando) return;
-    const { group, id } = editando;
-    if (group === calendario.grupo) {
-      setCalendario({
-        ...calendario,
-        horarios: calendario.horarios.map(h => 
-          h.id === id ? { ...h, ...formData } : h
-        )
-      });
-    } else {
-      setGroupRows(prev => ({
-        ...prev,
-        [group]: prev[group].map(r => r.id === id ? { ...r, ...formData } : r)
-      }));
+    const { grupo, id_horario } = editando;
+    
+    try {
+      // TODO: Implementar actualización en el backend
+      // Por ahora, actualizamos el estado local
+      const horaCompleta = formData.horaInicio && formData.horaFin 
+        ? `${formData.horaInicio}-${formData.horaFin}` 
+        : formData.horaInicio || '';
+      
+      // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY
+      let fechaFormato = '';
+      if (formData.fecha) {
+        const [anio, mes, dia] = formData.fecha.split('-');
+        fechaFormato = `${dia}/${mes}/${anio}`;
+      }
+      
+      setExamenes(prevExamenes => 
+        prevExamenes.map(examen => {
+          if (examen.id_horario === id_horario) {
+            return {
+              ...examen,
+              materia: formData.materia || examen.materia,
+              profesor: formData.profesor || examen.profesor,
+              fecha: fechaFormato || examen.fecha,
+              hora: horaCompleta || examen.hora,
+              aula: formData.aula || examen.aula
+            };
+          }
+          return examen;
+        })
+      );
+      
+      alert('Cambios guardados localmente. La funcionalidad de guardado en el servidor está en desarrollo.');
+      setEditando(null);
+      setFormData({});
+    } catch (err) {
+      console.error('Error guardando cambios:', err);
+      alert('Error al guardar los cambios. Por favor, intenta de nuevo.');
     }
-    setEditando(null);
-    setFormData({});
   };
 
   const handleInputChange = (e) => {
@@ -136,63 +153,108 @@ const ModificarCalendario = ({ user, onLogout }) => {
     setShowConfirm(true);
   };
 
-  const confirmarAccion = () => {
-    if (accionConfirmar === 'borrador') {
-      setCalendario({ ...calendario, estado: 'borrador' });
-      alert('Calendario guardado como borrador');
-    } else if (accionConfirmar === 'cambios') {
-      setCalendario({ ...calendario, estado: 'pendiente' });
-      alert('Cambios guardados exitosamente');
+  const confirmarAccion = async () => {
+    try {
+      if (accionConfirmar === 'borrador') {
+        // TODO: Implementar guardado como borrador en el backend
+        alert('Calendario guardado como borrador (localmente). La funcionalidad de guardado en el servidor está en desarrollo.');
+      } else if (accionConfirmar === 'cambios') {
+        // TODO: Implementar guardado de cambios en el backend
+        alert('Cambios guardados exitosamente (localmente). La funcionalidad de guardado en el servidor está en desarrollo.');
+      }
+      setShowConfirm(false);
+      setAccionConfirmar('');
+    } catch (err) {
+      console.error('Error guardando:', err);
+      alert('Error al guardar. Por favor, intenta de nuevo.');
     }
-    setShowConfirm(false);
-    setAccionConfirmar('');
   };
 
   const handleSalir = () => {
     navigate(ROUTES.VER_CALENDARIO);
   };
 
-  const handleEliminarHorario = (id, group) => {
+  const handleEliminarHorario = async (id_horario, grupo) => {
     if (!window.confirm('¿Estás seguro de eliminar este horario?')) return;
-    if (group === calendario.grupo) {
-      setCalendario({
-        ...calendario,
-        horarios: calendario.horarios.filter(h => h.id !== id)
-      });
-    } else {
-      setGroupRows(prev => ({
-        ...prev,
-        [group]: prev[group].filter(r => r.id !== id)
-      }));
-    }
-    // if we were editing that row, cancel edit
-    if (editando && editando.group === group && editando.id === id) {
-      setEditando(null);
-      setFormData({});
+    
+    try {
+      // TODO: Implementar eliminación en el backend
+      // Por ahora, eliminamos del estado local
+      setExamenes(prevExamenes => 
+        prevExamenes.filter(examen => examen.id_horario !== id_horario)
+      );
+      
+      // Si estábamos editando esa fila, cancelar edición
+      if (editando && editando.grupo === grupo && editando.id_horario === id_horario) {
+        setEditando(null);
+        setFormData({});
+      }
+      
+      alert('Horario eliminado localmente. La funcionalidad de eliminación en el servidor está en desarrollo.');
+    } catch (err) {
+      console.error('Error eliminando horario:', err);
+      alert('Error al eliminar el horario. Por favor, intenta de nuevo.');
     }
   };
 
-  const handleAgregarHorario = (group = calendario.grupo) => {
-    if (group === calendario.grupo) {
-      const nuevoId = calendario.horarios.length ? Math.max(...calendario.horarios.map(h => h.id)) + 1 : 1;
-      const nuevoHorario = { id: nuevoId, materia: '', profesor: '', fecha: '', hora: '', aula: '', sinodal: '' };
-      setCalendario(prev => ({ ...prev, horarios: [...prev.horarios, nuevoHorario] }));
-      handleEditarHorario(nuevoHorario, group);
-    } else {
-      setGroupRows(prev => {
-        const nextId = prev[group].length ? Math.max(...prev[group].map(r => r.id)) + 1 : 1;
-        const nuevo = { id: nextId, materia: '', profesor: '', fecha: '', hora: '', aula: '' };
-        return { ...prev, [group]: [...prev[group], nuevo] };
-      });
-      // open edit on the newly added row -- best-effort after state update
-      setTimeout(() => {
-        const current = groupRows[group] || [];
-        const id = current.length ? Math.max(...current.map(r => r.id)) + 1 : 1;
-        setEditando({ group, id });
-        setFormData({ materia: '', profesor: '', fecha: '', hora: '', aula: '' });
-      }, 0);
-    }
+  const handleAgregarHorario = (grupo) => {
+    // TODO: Implementar creación de nuevo horario en el backend
+    alert('La funcionalidad de agregar nuevos horarios está en desarrollo. Por favor, genera un nuevo calendario desde la página de Generar Calendario.');
   };
+
+  if (loading) {
+    return (
+      <Layout user={user} onLogout={onLogout}>
+        <div className="modificar-calendario-container">
+          <div className="content-area">
+            <div className="modificar-section">
+              <h2 className="section-title">Modificar Horarios de Examen</h2>
+              <p>Cargando calendario...</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout user={user} onLogout={onLogout}>
+        <div className="modificar-calendario-container">
+          <div className="content-area">
+            <div className="modificar-section">
+              <h2 className="section-title">Modificar Horarios de Examen</h2>
+              <div style={{ color: 'red', marginTop: '20px' }}>{error}</div>
+              <button onClick={cargarCalendario} style={{ marginTop: '10px' }}>
+                Reintentar
+              </button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (examenes.length === 0) {
+    return (
+      <Layout user={user} onLogout={onLogout}>
+        <div className="modificar-calendario-container">
+          <div className="content-area">
+            <div className="modificar-section">
+              <h2 className="section-title">Modificar Horarios de Examen</h2>
+              <p style={{ marginTop: '20px' }}>No hay exámenes programados para tu carrera.</p>
+              <button 
+                onClick={() => navigate(ROUTES.GENERAR_CALENDARIO)} 
+                style={{ marginTop: '10px', padding: '10px 20px' }}
+              >
+                Generar Calendario
+              </button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout user={user} onLogout={onLogout}>
@@ -220,27 +282,16 @@ const ModificarCalendario = ({ user, onLogout }) => {
             {/* Información del calendario */}
             <div className="info-calendario">
               <div className="info-item">
-                <strong>Carrera:</strong> {calendario.carrera}
+                <strong>Total de grupos:</strong> {grupos.length}
               </div>
               <div className="info-item">
-                <strong>Grupo:</strong> {calendario.grupo}
-              </div>
-              <div className="info-item">
-                <strong>Período:</strong> {calendario.periodo}
-              </div>
-              <div className="info-item">
-                <strong>Fecha de generación:</strong> {calendario.fechaGeneracion}
-              </div>
-              <div className="info-item">
-                <strong>Total de horarios:</strong> {calendario.horarios.length}
+                <strong>Total de exámenes:</strong> {examenes.length}
               </div>
             </div>
 
-            {/* Mostrar cuadrícula de grupos similar a VerCalendarioServicios.
-                El grupo del calendario (calendario.grupo) es editable (usa el mismo flujo de edición existente).
-            */}
+            {/* Mostrar cuadrícula de grupos */}
             <div className="groups-grid">
-              {['106','306','506','706','906'].map((g) => (
+              {grupos.map((g) => (
                 <div key={g} className="group-card">
                   <h3>Grupo {g}</h3>
                   <div className="table-container">
@@ -256,114 +307,111 @@ const ModificarCalendario = ({ user, onLogout }) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {(() => {
-                          const rows = g === calendario.grupo ? calendario.horarios : (groupRows[g] || []);
-                          return rows.map((horario) => (
-                            <tr key={horario.id}>
-                              {editando && editando.group === g && editando.id === horario.id ? (
-                                <>
-                                  <td>
+                        {(gruposExamenes[g] || []).map((examen) => (
+                          <tr key={examen.id_horario}>
+                            {editando && editando.grupo === g && editando.id_horario === examen.id_horario ? (
+                              <>
+                                <td>
+                                  <input
+                                    type="text"
+                                    name="materia"
+                                    value={formData.materia || ''}
+                                    onChange={handleInputChange}
+                                    className="edit-input"
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    name="profesor"
+                                    value={formData.profesor || ''}
+                                    onChange={handleInputChange}
+                                    className="edit-input"
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="date"
+                                    name="fecha"
+                                    value={formData.fecha || ''}
+                                    onChange={handleInputChange}
+                                    className="edit-input"
+                                  />
+                                </td>
+                                <td>
+                                  <div style={{ display: 'flex', gap: '5px' }}>
                                     <input
-                                      type="text"
-                                      name="materia"
-                                      value={formData.materia || ''}
+                                      type="time"
+                                      name="horaInicio"
+                                      value={formData.horaInicio || ''}
                                       onChange={handleInputChange}
                                       className="edit-input"
+                                      style={{ width: '80px' }}
                                     />
-                                  </td>
-                                  <td>
+                                    <span>-</span>
                                     <input
-                                      type="text"
-                                      name="profesor"
-                                      value={formData.profesor || ''}
+                                      type="time"
+                                      name="horaFin"
+                                      value={formData.horaFin || ''}
                                       onChange={handleInputChange}
                                       className="edit-input"
+                                      style={{ width: '80px' }}
                                     />
-                                  </td>
-                                  <td>
-                                    <input
-                                      type="date"
-                                      name="fecha"
-                                      value={formData.fecha || ''}
-                                      onChange={handleInputChange}
-                                      className="edit-input"
-                                    />
-                                  </td>
-                                  <td>
-                                    <select
-                                      name="hora"
-                                      value={formData.hora || ''}
-                                      onChange={handleInputChange}
-                                      className="edit-select"
+                                  </div>
+                                </td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    name="aula"
+                                    value={formData.aula || ''}
+                                    onChange={handleInputChange}
+                                    className="edit-input"
+                                  />
+                                </td>
+                                <td>
+                                  <div className="acciones-edit">
+                                    <button 
+                                      className="guardar-edit-btn"
+                                      onClick={handleGuardarCambios}
                                     >
-                                      <option value="">Seleccionar hora</option>
-                                      <option value="8:00-9:00">8:00-9:00</option>
-                                      <option value="9:00-10:00">9:00-10:00</option>
-                                      <option value="10:00-11:00">10:00-11:00</option>
-                                      <option value="11:00-12:00">11:00-12:00</option>
-                                      <option value="12:00-13:00">12:00-13:00</option>
-                                      <option value="13:00-14:00">13:00-14:00</option>
-                                      <option value="14:00-15:00">14:00-15:00</option>
-                                      <option value="15:00-16:00">15:00-16:00</option>
-                                      <option value="16:00-17:00">16:00-17:00</option>
-                                      <option value="17:00-18:00">17:00-18:00</option>
-                                      <option value="18:00-19:00">18:00-19:00</option>
-                                    </select>
-                                  </td>
-                                  <td>
-                                    <input
-                                      type="text"
-                                      name="aula"
-                                      value={formData.aula || ''}
-                                      onChange={handleInputChange}
-                                      className="edit-input"
-                                    />
-                                  </td>
-                                  <td>
-                                    <div className="acciones-edit">
-                                      <button 
-                                        className="guardar-edit-btn"
-                                        onClick={handleGuardarCambios}
-                                      >
-                                        <SaveIcon style={{marginRight:8}}/>Guardar
-                                      </button>
-                                      <button 
-                                        className="cancelar-edit-btn"
-                                        onClick={handleCancelarEdicion}
-                                      >
-                                        Cancelar
-                                      </button>
-                                    </div>
-                                  </td>
-                                </>
-                              ) : (
-                                <>
-                                  <td className="materia-cell">{horario.materia}</td>
-                                  <td className="profesor-cell">{horario.profesor}</td>
-                                  <td className="fecha-cell">{horario.fecha}</td>
-                                  <td className="hora-cell">{horario.hora}</td>
-                                  <td className="aula-cell">{horario.aula}</td>
-                                  <td>
-                                    <div className="acciones-buttons">
-                                      <button 
-                                        className="editar-horario-btn"
-                                        onClick={() => handleEditarHorario(horario, g)}
-                                      >
-                                        <EditIcon style={{marginRight:8}}/>Editar
-                                      </button>
-                                      <button 
-                                        className="eliminar-horario-btn"
-                                        onClick={() => handleEliminarHorario(horario.id, g)}
-                                      >
-                                        <TrashIcon style={{marginRight:8}}/>Eliminar
-                                      </button>
-                                    </div>
-                                  </td>
-                                </>
-                              )}
-                            </tr>
-                          ));
-                        })()}
+                                      <SaveIcon style={{marginRight:8}}/>Guardar
+                                    </button>
+                                    <button 
+                                      className="cancelar-edit-btn"
+                                      onClick={handleCancelarEdicion}
+                                    >
+                                      Cancelar
+                                    </button>
+                                  </div>
+                                </td>
+                              </>
+                            ) : (
+                              <>
+                                <td className="materia-cell">{examen.materia || 'N/A'}</td>
+                                <td className="profesor-cell">{examen.profesor || 'N/A'}</td>
+                                <td className="fecha-cell">{examen.fecha || 'N/A'}</td>
+                                <td className="hora-cell">{examen.hora || 'N/A'}</td>
+                                <td className="aula-cell">{examen.aula || 'N/A'}</td>
+                                <td>
+                                  <div className="acciones-buttons">
+                                    <button 
+                                      className="editar-horario-btn"
+                                      onClick={() => handleEditarHorario(examen, g)}
+                                    >
+                                      <EditIcon style={{marginRight:8}}/>Editar
+                                    </button>
+                                    <button 
+                                      className="eliminar-horario-btn"
+                                      onClick={() => handleEliminarHorario(examen.id_horario, g)}
+                                    >
+                                      <TrashIcon style={{marginRight:8}}/>Eliminar
+                                    </button>
+                                  </div>
+                                </td>
+                              </>
+                            )}
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>

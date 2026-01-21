@@ -78,8 +78,8 @@ const Layout = ({ user, onLogout, children }) => {
                 {user.rol === 'servicios' && <ClipboardIcon />}
               </div>
               <div className="user-details">
-                <span className="user-name">{user.nombre}</span>
-                <span className="user-email">{user.usuario || user.email || 'Usuario'}</span>
+                <span className="user-name">{user.nombre_usuario || user.nombre || 'Usuario'}</span>
+                <span className="user-email">{user.id_usuario || user.usuario || user.email || 'Sin ID'}</span>
               </div>
             </div>
           )}
@@ -95,7 +95,7 @@ const Layout = ({ user, onLogout, children }) => {
         <div className="header-actions">
           {user && (
             <>
-              <span className="welcome-text">Bienvenido, {user.nombre}</span>
+              <span className="welcome-text">Bienvenido, {user.nombre_usuario || user.nombre || 'Usuario'}</span>
               <span className="role-indicator">
                 {user.rol === 'admin' && 'Modo Administrador'}
                 {user.rol === 'jefe' && 'Modo Jefe de Carrera'}
