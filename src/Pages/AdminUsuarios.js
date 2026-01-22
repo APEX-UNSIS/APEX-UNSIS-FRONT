@@ -7,6 +7,7 @@ import { CrownIcon, GraduateIcon, ClipboardIcon, EditIcon, TrashIcon } from '../
 import usuarioService from '../core/services/usuarioService';
 import carreraService from '../core/services/carreraService';
 import profesorService from '../core/services/profesorService';
+import adminService from '../core/services/adminService';
 
 const AdminUsuarios = ({ user, onLogout }) => {
   const navigate = useNavigate();
@@ -16,6 +17,17 @@ const AdminUsuarios = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [profesorSeleccionado, setProfesorSeleccionado] = useState(null);
+  const [sincronizando, setSincronizando] = useState(false);
+  const [showModalSincronizar, setShowModalSincronizar] = useState(false);
+  const [sincronizacionLogs, setSincronizacionLogs] = useState([]);
+  const [sincronizacionData, setSincronizacionData] = useState({
+    periodo: '2526A',
+    grupo: '',  // Vacío = sincronizar todos
+    limpiarDatos: false
+  });
+  
+  // Periodos permitidos para sincronización
+  const periodosPermitidos = ['2526A', '2425B'];
   
   const [showModal, setShowModal] = useState(false);
   const [editando, setEditando] = useState(null);
@@ -312,6 +324,93 @@ const AdminUsuarios = ({ user, onLogout }) => {
     return carrera ? carrera.nombre_carrera : idCarrera;
   };
 
+  const handleSincronizarBaseDatos = async () => {
+    if (!sincronizacionData.periodo) {
+      alert('Por favor, selecciona el periodo académico.');
+      return;
+    }
+    
+    // Validar que el periodo esté en la lista de permitidos
+    if (!periodosPermitidos.includes(sincronizacionData.periodo)) {
+      alert(`Periodo no permitido. Solo se permiten los siguientes periodos: ${periodosPermitidos.join(', ')}`);
+      return;
+    }
+
+    const sincronizarTodos = !sincronizacionData.grupo || sincronizacionData.grupo.trim() === '';
+    
+    if (sincronizarTodos) {
+      if (!window.confirm(
+        '⚠️ ADVERTENCIA: Se sincronizarán TODAS las carreras y TODOS los grupos.\n\n' +
+        'Esto puede tomar varios minutos dependiendo de la cantidad de datos.\n\n' +
+        '¿Deseas continuar?'
+      )) {
+        return;
+      }
+    }
+
+    if (sincronizacionData.limpiarDatos) {
+      if (!window.confirm(
+        '⚠️ ADVERTENCIA CRÍTICA: Esto borrará TODOS los datos de carreras, grupos, aulas, profesores, materias y horarios.\n\n' +
+        'Los usuarios NO se eliminarán.\n\n' +
+        '¿Estás completamente seguro de continuar?'
+      )) {
+        return;
+      }
+    }
+
+    try {
+      setSincronizando(true);
+      setError(null);
+      setSincronizacionLogs(['⏳ Iniciando sincronización...']);
+      const resultado = await adminService.sincronizarBaseDatos(
+        sincronizacionData.periodo,
+        sincronizacionData.grupo || null,  // null = sincronizar todos
+        sincronizacionData.limpiarDatos
+      );
+      
+      // Mostrar logs si están disponibles
+      if (resultado.logs && resultado.logs.length > 0) {
+        setSincronizacionLogs(resultado.logs);
+      }
+      
+      let mensaje = `✅ ${resultado.mensaje}!\n\n`;
+      mensaje += `Periodo: ${resultado.periodo}\n`;
+      mensaje += `Grupos sincronizados: ${resultado.grupo === 'TODOS' ? resultado.grupos_sincronizados : 1}\n`;
+      
+      if (resultado.grupos_fallidos > 0) {
+        mensaje += `⚠️ Grupos con errores: ${resultado.grupos_fallidos}\n`;
+      }
+      
+      mensaje += `\nEstadísticas:\n`;
+      mensaje += `- Carreras: ${resultado.estadisticas.carreras_insertadas} insertadas, ${resultado.estadisticas.carreras_actualizadas} actualizadas\n`;
+      mensaje += `- Grupos: ${resultado.estadisticas.grupos_insertados} insertados, ${resultado.estadisticas.grupos_actualizados} actualizados\n`;
+      mensaje += `- Aulas: ${resultado.estadisticas.aulas_insertadas} insertadas, ${resultado.estadisticas.aulas_actualizadas} actualizadas\n`;
+      mensaje += `- Profesores: ${resultado.estadisticas.profesores_insertados} insertados, ${resultado.estadisticas.profesores_actualizados} actualizados\n`;
+      mensaje += `- Materias: ${resultado.estadisticas.materias_insertadas} insertadas, ${resultado.estadisticas.materias_actualizadas} actualizadas\n`;
+      mensaje += `- Periodos: ${resultado.estadisticas.periodos_insertados} insertados, ${resultado.estadisticas.periodos_actualizados} actualizados\n`;
+      mensaje += `- Horarios: ${resultado.estadisticas.horarios_insertados} insertados, ${resultado.estadisticas.horarios_actualizados} actualizados\n\n`;
+      mensaje += `Total insertado: ${resultado.total_insertado} registros\n`;
+      mensaje += `Total actualizado: ${resultado.total_actualizado} registros\n`;
+      mensaje += `Total operaciones: ${resultado.total_operaciones} registros`;
+      
+      // Mostrar mensaje final
+      alert(mensaje);
+      
+      // No cerrar el modal automáticamente para que el usuario pueda ver los logs
+      // setShowModalSincronizar(false);
+      // Recargar datos si es necesario
+      loadCarreras();
+      loadProfesores();
+    } catch (err) {
+      console.error('Error sincronizando base de datos:', err);
+      const errorMsg = `Error al sincronizar la base de datos: ${err.response?.data?.detail || err.message || 'Error desconocido'}`;
+      setError(errorMsg);
+      setSincronizacionLogs(prev => [...prev, `❌ ERROR: ${errorMsg}`]);
+    } finally {
+      setSincronizando(false);
+    }
+  };
+
   return (
     <Layout user={user} onLogout={onLogout}>
       <div className="admin-usuarios-container">
@@ -319,9 +418,26 @@ const AdminUsuarios = ({ user, onLogout }) => {
           <div className="usuarios-section">
             <div className="section-header">
               <h2 className="section-title">Usuarios del Sistema</h2>
-              <button className="agregar-btn" onClick={handleAgregarUsuario}>
-                + Agregar Usuario
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  className="sincronizar-btn" 
+                  onClick={() => setShowModalSincronizar(true)}
+                  style={{
+                    backgroundColor: '#3B82F6',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  🔄 Actualizar Base de Datos
+                </button>
+                <button className="agregar-btn" onClick={handleAgregarUsuario}>
+                  + Agregar Usuario
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -603,6 +719,120 @@ const AdminUsuarios = ({ user, onLogout }) => {
                 disabled={!formData.nombre_usuario || (!editando && (!formData.id_usuario || !formData.contraseña || !profesorSeleccionado))}
               >
                 {editando ? 'Actualizar' : 'Agregar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de sincronización */}
+      {showModalSincronizar && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <h3 className="modal-title">Actualizar Base de Datos</h3>
+            <p style={{ marginBottom: '20px', color: '#6B7280' }}>
+              Consulta la API externa de horarios y actualiza la base de datos con los datos más recientes.
+            </p>
+            
+            <div className="form-group" style={{ marginBottom: '15px' }}>
+              <label>Periodo Académico *:</label>
+              <select
+                value={sincronizacionData.periodo}
+                onChange={(e) => setSincronizacionData({ ...sincronizacionData, periodo: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid #D1D5DB',
+                  backgroundColor: 'white'
+                }}
+              >
+                {periodosPermitidos.map(periodo => (
+                  <option key={periodo} value={periodo}>
+                    {periodo}
+                  </option>
+                ))}
+              </select>
+              <small style={{ color: '#6B7280', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>
+                Solo se permiten los periodos: {periodosPermitidos.join(', ')}
+              </small>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '15px' }}>
+              <label>Grupo Escolar (opcional):</label>
+              <input
+                type="text"
+                value={sincronizacionData.grupo}
+                onChange={(e) => setSincronizacionData({ ...sincronizacionData, grupo: e.target.value })}
+                placeholder="Dejar vacío para sincronizar TODOS los grupos. Ej: 706 para un grupo específico"
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid #D1D5DB'
+                }}
+              />
+              <small style={{ color: '#6B7280', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>
+                💡 Si dejas vacío, se sincronizarán automáticamente todas las carreras y todos los grupos del periodo.
+              </small>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>
+                <input
+                  type="checkbox"
+                  checked={sincronizacionData.limpiarDatos}
+                  onChange={(e) => setSincronizacionData({ ...sincronizacionData, limpiarDatos: e.target.checked })}
+                />
+                <span>🗑️ Borrar datos existentes antes de insertar</span>
+              </label>
+              <div style={{ marginLeft: '24px', marginTop: '8px' }}>
+                <small style={{ color: '#EF4444', display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                  ⚠️ ADVERTENCIA: Si está marcado, se eliminarán TODOS los datos de:
+                </small>
+                <ul style={{ margin: '4px 0', paddingLeft: '20px', color: '#6B7280', fontSize: '0.9rem' }}>
+                  <li>Carreras</li>
+                  <li>Grupos</li>
+                  <li>Aulas</li>
+                  <li>Profesores</li>
+                  <li>Materias</li>
+                  <li>Horarios</li>
+                  <li>Periodos</li>
+                </ul>
+                <small style={{ color: '#10B981', display: 'block', marginTop: '8px', fontWeight: '500' }}>
+                  ✅ Los usuarios NO se eliminarán
+                </small>
+                <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#F3F4F6', borderRadius: '6px' }}>
+                  <strong style={{ color: '#374151', fontSize: '0.85rem', display: 'block', marginBottom: '4px' }}>💡 Cuándo usar:</strong>
+                  <ul style={{ margin: '4px 0', paddingLeft: '20px', color: '#6B7280', fontSize: '0.85rem' }}>
+                    <li><strong>Marcar:</strong> Primera sincronización completa o cuando quieres reemplazar todos los datos</li>
+                    <li><strong>No marcar:</strong> Actualización incremental o cuando solo quieres agregar/actualizar datos nuevos</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button 
+                className="modal-cancel"
+                onClick={() => {
+                  setShowModalSincronizar(false);
+                  setSincronizacionData({ periodo: '2526A', grupo: '', limpiarDatos: false });
+                }}
+                disabled={sincronizando}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="modal-confirm"
+                onClick={handleSincronizarBaseDatos}
+                disabled={sincronizando || !sincronizacionData.periodo || sincronizacionData.periodo.trim() === ''}
+                style={{
+                  backgroundColor: sincronizando || !sincronizacionData.periodo || sincronizacionData.periodo.trim() === '' ? '#9CA3AF' : '#3B82F6',
+                  cursor: sincronizando || !sincronizacionData.periodo || sincronizacionData.periodo.trim() === '' ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {sincronizando ? 'Sincronizando...' : 'Sincronizar'}
               </button>
             </div>
           </div>

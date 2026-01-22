@@ -59,6 +59,14 @@ const ModificarCalendario = ({ user, onLogout }) => {
 
   const gruposExamenes = agruparPorGrupo();
   const grupos = Object.keys(gruposExamenes).sort();
+  
+  // Obtener periodo y evaluación del primer examen (todos deberían tener los mismos)
+  const periodoInfo = examenes.length > 0 ? {
+    id_periodo: examenes[0].id_periodo,
+    nombre_periodo: examenes[0].periodo,
+    id_evaluacion: examenes[0].id_evaluacion,
+    nombre_evaluacion: examenes[0].evaluacion
+  } : null;
 
 
   const handleEditarHorario = (examen, grupo) => {
@@ -202,6 +210,45 @@ const ModificarCalendario = ({ user, onLogout }) => {
     alert('La funcionalidad de agregar nuevos horarios está en desarrollo. Por favor, genera un nuevo calendario desde la página de Generar Calendario.');
   };
 
+  const handleEnviarServiciosEscolares = async () => {
+    if (!periodoInfo || !periodoInfo.id_periodo || !periodoInfo.id_evaluacion) {
+      alert('No se puede enviar el calendario. Falta información de periodo o evaluación.');
+      return;
+    }
+
+    if (examenes.length === 0) {
+      alert('No hay exámenes para enviar.');
+      return;
+    }
+
+    if (!window.confirm(
+      `¿Estás seguro de enviar el calendario a Servicios Escolares?\n\n` +
+      `Periodo: ${periodoInfo.nombre_periodo || periodoInfo.id_periodo}\n` +
+      `Evaluación: ${periodoInfo.nombre_evaluacion || periodoInfo.id_evaluacion}\n` +
+      `Total de exámenes: ${examenes.length}\n\n` +
+      `Una vez enviado, el calendario quedará pendiente de revisión.`
+    )) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const resultado = await calendarioService.enviar(
+        periodoInfo.id_periodo,
+        periodoInfo.id_evaluacion
+      );
+      
+      alert(`✅ ${resultado.mensaje}\n${resultado.solicitudes_enviadas} exámenes enviados.`);
+      // Recargar el calendario para ver el estado actualizado
+      await cargarCalendario();
+    } catch (err) {
+      console.error('Error enviando calendario:', err);
+      alert(`Error al enviar el calendario: ${err.response?.data?.detail || err.message || 'Error desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Layout user={user} onLogout={onLogout}>
@@ -282,11 +329,31 @@ const ModificarCalendario = ({ user, onLogout }) => {
             {/* Información del calendario */}
             <div className="info-calendario">
               <div className="info-item">
+                <strong>Periodo:</strong> {periodoInfo?.nombre_periodo || periodoInfo?.id_periodo || 'N/A'}
+              </div>
+              <div className="info-item">
+                <strong>Evaluación:</strong> {periodoInfo?.nombre_evaluacion || periodoInfo?.id_evaluacion || 'N/A'}
+              </div>
+              <div className="info-item">
                 <strong>Total de grupos:</strong> {grupos.length}
               </div>
               <div className="info-item">
                 <strong>Total de exámenes:</strong> {examenes.length}
               </div>
+              {examenes.length > 0 && examenes[0].estado !== undefined && (
+                <div className="info-item">
+                  <strong>Estado:</strong> {
+                    examenes[0].estado === 0 ? 'Pendiente' :
+                    examenes[0].estado === 1 ? 'Aprobado' :
+                    examenes[0].estado === 2 ? 'Rechazado' : 'Desconocido'
+                  }
+                </div>
+              )}
+              {examenes.length > 0 && examenes[0].motivo_rechazo && (
+                <div className="info-item" style={{ gridColumn: '1 / -1', color: '#EF4444' }}>
+                  <strong>Comentarios de Servicios Escolares:</strong> {examenes[0].motivo_rechazo}
+                </div>
+              )}
             </div>
 
             {/* Mostrar cuadrícula de grupos */}
@@ -433,6 +500,23 @@ const ModificarCalendario = ({ user, onLogout }) => {
                 onClick={handleGuardarCambiosFinal}
               >
                 <SaveIcon style={{marginRight:8}}/>Guardar Cambios
+              </button>
+              
+              <button 
+                className="enviar-servicios-btn"
+                onClick={handleEnviarServiciosEscolares}
+                disabled={!periodoInfo || examenes.length === 0}
+                style={{
+                  backgroundColor: '#10B981',
+                  borderColor: '#10B981',
+                  color: '#fff',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  cursor: (!periodoInfo || examenes.length === 0) ? 'not-allowed' : 'pointer',
+                  opacity: (!periodoInfo || examenes.length === 0) ? 0.5 : 1
+                }}
+              >
+                📤 Enviar a Servicios Escolares
               </button>
               
               <button 

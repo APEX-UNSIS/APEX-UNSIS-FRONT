@@ -682,3 +682,8 @@
     min-width: 550px;
   }
 }
+
+/* Animación para spinner de logs */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
