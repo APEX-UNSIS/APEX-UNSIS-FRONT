@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../config/routes';
 import Layout from '../components/Layout';
 import './AdminUsuarios.css';
-import { CrownIcon, GraduateIcon, ClipboardIcon, EditIcon, TrashIcon } from '../icons';
+import { CrownIcon, GraduateIcon, ClipboardIcon, EditIcon, TrashIcon, CopyIcon, KeyIcon, ShareIcon, PlusIcon, RefreshIcon } from '../icons';
 import usuarioService from '../core/services/usuarioService';
 import carreraService from '../core/services/carreraService';
 import profesorService from '../core/services/profesorService';
@@ -30,6 +30,21 @@ const AdminUsuarios = ({ user, onLogout }) => {
   const periodosPermitidos = ['2526A', '2425B'];
   
   const [showModal, setShowModal] = useState(false);
+  const [showModalCredenciales, setShowModalCredenciales] = useState(false);
+  const [credencialesUsuario, setCredencialesUsuario] = useState(null);
+  const [reseteandoContraseña, setReseteandoContraseña] = useState(false);
+  
+  // Estados para alertas personalizadas
+  const [alertState, setAlertState] = useState({
+    show: false,
+    type: 'info', // 'success', 'error', 'warning', 'info', 'confirm'
+    title: '',
+    message: '',
+    onConfirm: null,
+    onCancel: null,
+    confirmText: 'Aceptar',
+    cancelText: 'Cancelar'
+  });
   const [editando, setEditando] = useState(null);
   const [formData, setFormData] = useState({
     id_usuario: '',
@@ -39,6 +54,22 @@ const AdminUsuarios = ({ user, onLogout }) => {
     id_carrera: '',
     is_active: true
   });
+  const [busquedaNombre, setBusquedaNombre] = useState('');
+  const [busquedaMatricula, setBusquedaMatricula] = useState('');
+  const [focusNombre, setFocusNombre] = useState(false);
+  const [focusMatricula, setFocusMatricula] = useState(false);
+  const [lastAddedUserId, setLastAddedUserId] = useState(null);
+
+  // Orden: admin logueado primero, último usuario agregado segundo, resto
+  const usuariosOrdenados = React.useMemo(() => {
+    if (!usuarios.length) return [];
+    const currentId = user?.id_usuario;
+    const first = currentId ? usuarios.find((u) => u.id_usuario === currentId) : null;
+    const secondId = lastAddedUserId && lastAddedUserId !== currentId ? lastAddedUserId : null;
+    const second = secondId ? usuarios.find((u) => u.id_usuario === secondId) : null;
+    const rest = usuarios.filter((u) => u.id_usuario !== currentId && u.id_usuario !== secondId);
+    return [first, second, ...rest].filter(Boolean);
+  }, [usuarios, user?.id_usuario, lastAddedUserId]);
 
   // Cargar usuarios, carreras y profesores al montar el componente
   useEffect(() => {
@@ -146,62 +177,50 @@ const AdminUsuarios = ({ user, onLogout }) => {
     return `Pass_${iniciales}#${año}`;
   };
 
-  // Manejar selección de profesor por nombre
-  const handleSeleccionarProfesorPorNombre = (e) => {
-    const nombreSeleccionado = e.target.value;
-    if (nombreSeleccionado) {
-      const profesor = profesores.find(p => p.nombre_profesor === nombreSeleccionado);
-      if (profesor) {
-        setProfesorSeleccionado(profesor);
-        const contraseñaGenerada = generarContraseña(profesor.nombre_profesor, profesor.id_profesor);
-        setFormData({
-          ...formData,
-          id_usuario: profesor.id_profesor,
-          nombre_usuario: profesor.nombre_profesor,
-          contraseña: contraseñaGenerada
-        });
-      }
-    } else {
-      setProfesorSeleccionado(null);
-      setFormData({
-        ...formData,
-        id_usuario: '',
-        nombre_usuario: '',
-        contraseña: ''
-      });
-    }
+  const seleccionarProfesor = (profesor) => {
+    if (!profesor) return;
+    setProfesorSeleccionado(profesor);
+    const contraseñaGenerada = generarContraseña(profesor.nombre_profesor, profesor.id_profesor);
+    setFormData(prev => ({
+      ...prev,
+      id_usuario: profesor.id_profesor,
+      nombre_usuario: profesor.nombre_profesor,
+      contraseña: contraseñaGenerada
+    }));
+    setBusquedaNombre(profesor.nombre_profesor);
+    setBusquedaMatricula(profesor.id_profesor);
+    setFocusNombre(false);
+    setFocusMatricula(false);
   };
 
-  // Manejar selección de profesor por matrícula
-  const handleSeleccionarProfesorPorMatricula = (e) => {
-    const matriculaSeleccionada = e.target.value;
-    if (matriculaSeleccionada) {
-      const profesor = profesores.find(p => p.id_profesor === matriculaSeleccionada);
-      if (profesor) {
-        setProfesorSeleccionado(profesor);
-        const contraseñaGenerada = generarContraseña(profesor.nombre_profesor, profesor.id_profesor);
-        setFormData({
-          ...formData,
-          id_usuario: profesor.id_profesor,
-          nombre_usuario: profesor.nombre_profesor,
-          contraseña: contraseñaGenerada
-        });
-      }
-    } else {
-      setProfesorSeleccionado(null);
-      setFormData({
-        ...formData,
-        id_usuario: '',
-        nombre_usuario: '',
-        contraseña: ''
-      });
-    }
+  const limpiarSeleccionProfesor = () => {
+    setProfesorSeleccionado(null);
+    setFormData(prev => ({
+      ...prev,
+      id_usuario: '',
+      nombre_usuario: '',
+      contraseña: ''
+    }));
+    setBusquedaNombre('');
+    setBusquedaMatricula('');
   };
+
+  const q = (t) => (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const profesoresFiltradosPorNombre = busquedaNombre.trim()
+    ? profesores.filter(p => q(p.nombre_profesor).includes(q(busquedaNombre)))
+    : profesores;
+  const profesoresFiltradosPorMatricula = busquedaMatricula.trim()
+    ? profesores.filter(p => (p.id_profesor || '').toLowerCase().includes(busquedaMatricula.trim().toLowerCase()))
+    : profesores;
 
 
   const handleAgregarUsuario = () => {
     setEditando(null);
     setProfesorSeleccionado(null);
+    setBusquedaNombre('');
+    setBusquedaMatricula('');
+    setFocusNombre(false);
+    setFocusMatricula(false);
     setFormData({
       id_usuario: '',
       nombre_usuario: '',
@@ -227,30 +246,96 @@ const AdminUsuarios = ({ user, onLogout }) => {
     setShowModal(true);
   };
 
+  const handleVerCredenciales = async (usuario) => {
+    try {
+      setReseteandoContraseña(true);
+      // Resetear contraseña para obtener las credenciales
+      const resultado = await usuarioService.resetPassword(usuario.id_usuario);
+      setCredencialesUsuario({
+        id_usuario: resultado.id_usuario,
+        nombre_usuario: resultado.nombre_usuario,
+        contraseña: resultado.contraseña
+      });
+      setShowModalCredenciales(true);
+    } catch (err) {
+      console.error('Error obteniendo credenciales:', err);
+      showAlert('error', 'Error', 'Error al obtener credenciales. Por favor, intenta de nuevo.');
+    } finally {
+      setReseteandoContraseña(false);
+    }
+  };
+
+  // Funciones helper para mostrar alertas
+  const showAlert = (type, title, message) => {
+    setAlertState({
+      show: true,
+      type,
+      title,
+      message,
+      onConfirm: () => setAlertState(prev => ({ ...prev, show: false })),
+      onCancel: null,
+      confirmText: 'Aceptar',
+      cancelText: 'Cancelar'
+    });
+  };
+
+  const showConfirm = (title, message, onConfirm, onCancel = null) => {
+    setAlertState({
+      show: true,
+      type: 'confirm',
+      title,
+      message,
+      onConfirm: () => {
+        if (onConfirm) onConfirm();
+        setAlertState(prev => ({ ...prev, show: false }));
+      },
+      onCancel: () => {
+        if (onCancel) onCancel();
+        setAlertState(prev => ({ ...prev, show: false }));
+      },
+      confirmText: 'Aceptar',
+      cancelText: 'Cancelar'
+    });
+  };
+
+  const handleCopiarCredenciales = (texto) => {
+    navigator.clipboard.writeText(texto).then(() => {
+      showAlert('success', '¡Copiado!', 'Las credenciales se han copiado al portapapeles.');
+    }).catch(err => {
+      console.error('Error copiando:', err);
+      showAlert('error', 'Error', 'Error al copiar. Por favor, copia manualmente.');
+    });
+  };
+
   const handleEliminarUsuario = async (idUsuario, nombreUsuario) => {
     // Validar si el usuario está intentando eliminarse a sí mismo
     if (user && user.id_usuario === idUsuario) {
-      alert('No puedes eliminarte a ti mismo. Por favor, solicita a otro administrador que lo haga.');
+      showAlert('warning', 'Acción no permitida', 'No puedes eliminarte a ti mismo. Por favor, solicita a otro administrador que lo haga.');
       return;
     }
 
-    if (window.confirm(`¿Estás seguro de eliminar al usuario "${nombreUsuario}"?\n\nEsta acción no se puede deshacer.`)) {
-      try {
-        await usuarioService.delete(idUsuario);
-        await loadUsuarios(); // Recargar lista
-      } catch (err) {
-        console.error('Error eliminando usuario:', err);
-        let errorMessage = 'Error al eliminar usuario. Por favor, intenta de nuevo.';
-        
-        if (err.response) {
-          errorMessage = err.response.data?.detail || errorMessage;
-        } else if (err.message) {
-          errorMessage = err.message;
+    showConfirm(
+      'Confirmar eliminación',
+      `¿Estás seguro de eliminar al usuario "${nombreUsuario}"?\n\nEsta acción no se puede deshacer.`,
+      async () => {
+        try {
+          await usuarioService.delete(idUsuario);
+          await loadUsuarios(); // Recargar lista
+        } catch (err) {
+          console.error('Error eliminando usuario:', err);
+          let errorMessage = 'Error al eliminar usuario. Por favor, intenta de nuevo.';
+          
+          if (err.response) {
+            errorMessage = err.response.data?.detail || errorMessage;
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+          
+          showAlert('error', 'Error', errorMessage);
         }
-        
-        alert(errorMessage);
-      }
-    }
+      },
+      null
+    );
   };
 
   const handleGuardarUsuario = async () => {
@@ -287,7 +372,9 @@ const AdminUsuarios = ({ user, onLogout }) => {
           return;
         }
         
+        const newId = formData.id_usuario;
         await usuarioService.create(formData);
+        setLastAddedUserId(newId);
       }
       setShowModal(false);
       // Limpiar el formulario
@@ -312,7 +399,7 @@ const AdminUsuarios = ({ user, onLogout }) => {
         errorMessage = err.message;
       }
       
-      alert(errorMessage);
+      showAlert('error', 'Error', errorMessage);
       // No cerrar el modal si hay error, para que el usuario pueda corregir
     }
   };
@@ -324,40 +411,7 @@ const AdminUsuarios = ({ user, onLogout }) => {
     return carrera ? carrera.nombre_carrera : idCarrera;
   };
 
-  const handleSincronizarBaseDatos = async () => {
-    if (!sincronizacionData.periodo) {
-      alert('Por favor, selecciona el periodo académico.');
-      return;
-    }
-    
-    // Validar que el periodo esté en la lista de permitidos
-    if (!periodosPermitidos.includes(sincronizacionData.periodo)) {
-      alert(`Periodo no permitido. Solo se permiten los siguientes periodos: ${periodosPermitidos.join(', ')}`);
-      return;
-    }
-
-    const sincronizarTodos = !sincronizacionData.grupo || sincronizacionData.grupo.trim() === '';
-    
-    if (sincronizarTodos) {
-      if (!window.confirm(
-        '⚠️ ADVERTENCIA: Se sincronizarán TODAS las carreras y TODOS los grupos.\n\n' +
-        'Esto puede tomar varios minutos dependiendo de la cantidad de datos.\n\n' +
-        '¿Deseas continuar?'
-      )) {
-        return;
-      }
-    }
-
-    if (sincronizacionData.limpiarDatos) {
-      if (!window.confirm(
-        '⚠️ ADVERTENCIA CRÍTICA: Esto borrará TODOS los datos de carreras, grupos, aulas, profesores, materias y horarios.\n\n' +
-        'Los usuarios NO se eliminarán.\n\n' +
-        '¿Estás completamente seguro de continuar?'
-      )) {
-        return;
-      }
-    }
-
+  const ejecutarSincronizacion = async () => {
     try {
       setSincronizando(true);
       setError(null);
@@ -373,12 +427,12 @@ const AdminUsuarios = ({ user, onLogout }) => {
         setSincronizacionLogs(resultado.logs);
       }
       
-      let mensaje = `✅ ${resultado.mensaje}!\n\n`;
+      let mensaje = `${resultado.mensaje}!\n\n`;
       mensaje += `Periodo: ${resultado.periodo}\n`;
       mensaje += `Grupos sincronizados: ${resultado.grupo === 'TODOS' ? resultado.grupos_sincronizados : 1}\n`;
       
       if (resultado.grupos_fallidos > 0) {
-        mensaje += `⚠️ Grupos con errores: ${resultado.grupos_fallidos}\n`;
+        mensaje += `Grupos con errores: ${resultado.grupos_fallidos}\n`;
       }
       
       mensaje += `\nEstadísticas:\n`;
@@ -394,7 +448,7 @@ const AdminUsuarios = ({ user, onLogout }) => {
       mensaje += `Total operaciones: ${resultado.total_operaciones} registros`;
       
       // Mostrar mensaje final
-      alert(mensaje);
+      showAlert('success', 'Sincronización completada', mensaje);
       
       // No cerrar el modal automáticamente para que el usuario pueda ver los logs
       // setShowModalSincronizar(false);
@@ -405,10 +459,58 @@ const AdminUsuarios = ({ user, onLogout }) => {
       console.error('Error sincronizando base de datos:', err);
       const errorMsg = `Error al sincronizar la base de datos: ${err.response?.data?.detail || err.message || 'Error desconocido'}`;
       setError(errorMsg);
-      setSincronizacionLogs(prev => [...prev, `❌ ERROR: ${errorMsg}`]);
+      setSincronizacionLogs(prev => [...prev, `ERROR: ${errorMsg}`]);
     } finally {
       setSincronizando(false);
     }
+  };
+
+  const handleSincronizarBaseDatos = async () => {
+    if (!sincronizacionData.periodo) {
+      showAlert('warning', 'Periodo requerido', 'Por favor, selecciona el periodo académico.');
+      return;
+    }
+    
+    // Validar que el periodo esté en la lista de permitidos
+    if (!periodosPermitidos.includes(sincronizacionData.periodo)) {
+      showAlert('warning', 'Periodo no permitido', `Solo se permiten los siguientes periodos: ${periodosPermitidos.join(', ')}`);
+      return;
+    }
+
+    const sincronizarTodos = !sincronizacionData.grupo || sincronizacionData.grupo.trim() === '';
+    
+    if (sincronizarTodos) {
+      showConfirm(
+        'Confirmar sincronización',
+        'Se sincronizarán TODAS las carreras y TODOS los grupos.\n\nEsto puede tomar varios minutos dependiendo de la cantidad de datos.\n\n¿Deseas continuar?',
+        () => {
+          if (sincronizacionData.limpiarDatos) {
+            showConfirm(
+              'ADVERTENCIA CRÍTICA',
+              'Esto borrará TODOS los datos de carreras, grupos, aulas, profesores, materias y horarios.\n\nLos usuarios NO se eliminarán.\n\n¿Estás completamente seguro de continuar?',
+              () => ejecutarSincronizacion(),
+              null
+            );
+          } else {
+            ejecutarSincronizacion();
+          }
+        },
+        null
+      );
+      return;
+    }
+
+    if (sincronizacionData.limpiarDatos) {
+      showConfirm(
+        'ADVERTENCIA CRÍTICA',
+        'Esto borrará TODOS los datos de carreras, grupos, aulas, profesores, materias y horarios.\n\nLos usuarios NO se eliminarán.\n\n¿Estás completamente seguro de continuar?',
+        () => ejecutarSincronizacion(),
+        null
+      );
+      return;
+    }
+
+    ejecutarSincronizacion();
   };
 
   return (
@@ -418,32 +520,22 @@ const AdminUsuarios = ({ user, onLogout }) => {
           <div className="usuarios-section">
             <div className="section-header">
               <h2 className="section-title">Usuarios del Sistema</h2>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button 
-                  className="sincronizar-btn" 
-                  onClick={() => setShowModalSincronizar(true)}
-                  style={{
-                    backgroundColor: '#3B82F6',
-                    color: '#fff',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
-                >
-                  🔄 Actualizar Base de Datos
-                </button>
+              <div className="header-actions">
                 <button className="agregar-btn" onClick={handleAgregarUsuario}>
-                  + Agregar Usuario
+                  <PlusIcon style={{ fontSize: '1.1rem' }} />
+                  Agregar Usuario
+                </button>
+                <button className="sincronizar-btn" onClick={() => setShowModalSincronizar(true)}>
+                  <RefreshIcon style={{ fontSize: '1.1rem' }} />
+                  Actualizar Base de Datos
                 </button>
               </div>
             </div>
 
             {error && (
               <div style={{ 
-                background: '#FEE2E2', 
-                color: '#991B1B', 
+                background: '#F3F4F6', 
+                color: '#6B7280', 
                 padding: '12px', 
                 borderRadius: '6px', 
                 marginBottom: '20px' 
@@ -462,7 +554,7 @@ const AdminUsuarios = ({ user, onLogout }) => {
                   <table className="usuarios-table">
                     <thead>
                       <tr>
-                        <th>Matrícula</th>
+                        <th>No. de trabajador</th>
                         <th>Nombre</th>
                         <th>Rol</th>
                         <th>Información</th>
@@ -471,14 +563,14 @@ const AdminUsuarios = ({ user, onLogout }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {usuarios.length === 0 ? (
+                      {usuariosOrdenados.length === 0 ? (
                         <tr>
                           <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
                             No hay usuarios registrados
                           </td>
                         </tr>
                       ) : (
-                        usuarios.map((usuario) => (
+                        usuariosOrdenados.map((usuario) => (
                           <tr key={usuario.id_usuario}>
                             <td>{usuario.id_usuario}</td>
                             <td>{usuario.nombre_usuario}</td>
@@ -500,12 +592,19 @@ const AdminUsuarios = ({ user, onLogout }) => {
                               </span>
                             </td>
                             <td>
-                              <div className="acciones-buttons">
+                              <div className="acciones-buttons" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                 <button 
                                   className="editar-btn"
                                   onClick={() => handleEditarUsuario(usuario)}
+                                  title="Editar usuario"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                  }}
                                 >
-                                  <EditIcon style={{marginRight:8}}/>Editar
+                                  <EditIcon style={{fontSize: '16px'}}/>
+                                  <span>Editar</span>
                                 </button>
                                 <button 
                                   className="eliminar-btn"
@@ -514,10 +613,48 @@ const AdminUsuarios = ({ user, onLogout }) => {
                                   title={user && user.id_usuario === usuario.id_usuario ? 'No puedes eliminarte a ti mismo' : 'Eliminar usuario'}
                                   style={{
                                     opacity: (user && user.id_usuario === usuario.id_usuario) ? 0.5 : 1,
-                                    cursor: (user && user.id_usuario === usuario.id_usuario) ? 'not-allowed' : 'pointer'
+                                    cursor: (user && user.id_usuario === usuario.id_usuario) ? 'not-allowed' : 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
                                   }}
                                 >
-                                  <TrashIcon style={{marginRight:8}}/>Eliminar
+                                  <TrashIcon style={{fontSize: '16px'}}/>
+                                  <span>Eliminar</span>
+                                </button>
+                                <button 
+                                  onClick={() => handleVerCredenciales(usuario)}
+                                  disabled={reseteandoContraseña}
+                                  title="Compartir credenciales"
+                                  style={{
+                                    backgroundColor: reseteandoContraseña ? '#9CA3AF' : '#3B82F6',
+                                    color: '#fff',
+                                    border: 'none',
+                                    padding: '6px 10px',
+                                    borderRadius: '4px',
+                                    cursor: reseteandoContraseña ? 'not-allowed' : 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minWidth: '36px',
+                                    height: '36px',
+                                    transition: 'all 0.2s ease',
+                                    opacity: reseteandoContraseña ? 0.6 : 1
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!reseteandoContraseña) {
+                                      e.target.style.backgroundColor = '#2563EB';
+                                      e.target.style.transform = 'scale(1.05)';
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!reseteandoContraseña) {
+                                      e.target.style.backgroundColor = '#3B82F6';
+                                      e.target.style.transform = 'scale(1)';
+                                    }
+                                  }}
+                                >
+                                  <ShareIcon style={{fontSize: '18px'}}/>
                                 </button>
                               </div>
                             </td>
@@ -545,7 +682,7 @@ const AdminUsuarios = ({ user, onLogout }) => {
               </div>
               <div className="stat-card">
                 <h3>Usuarios Activos</h3>
-                <p className="stat-number">{usuarios.filter(u => u.activo).length}</p>
+                <p className="stat-number">{usuarios.filter(u => u.is_active).length}</p>
               </div>
             </div>
           </div>
@@ -562,37 +699,89 @@ const AdminUsuarios = ({ user, onLogout }) => {
             {!editando ? (
               <>
                 <div className="form-group">
-                  <label>Seleccionar por Nombre del Maestro</label>
-                  <select
-                    value={profesorSeleccionado?.nombre_profesor || ''}
-                    onChange={handleSeleccionarProfesorPorNombre}
-                  >
-                    <option value="">-- Selecciona un maestro por nombre --</option>
-                    {profesores.map((profesor) => (
-                      <option key={profesor.id_profesor} value={profesor.nombre_profesor}>
-                        {profesor.nombre_profesor}
-                      </option>
-                    ))}
-                  </select>
+                  <label>Buscar por Nombre del Maestro</label>
+                  <div className="searchable-select-wrap">
+                    <input
+                      type="text"
+                      value={busquedaNombre}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setBusquedaNombre(v);
+                        if (!v.trim()) limpiarSeleccionProfesor();
+                        else if (profesorSeleccionado && v !== profesorSeleccionado.nombre_profesor) {
+                          setProfesorSeleccionado(null);
+                          setFormData(prev => ({ ...prev, id_usuario: '', nombre_usuario: '', contraseña: '' }));
+                          setBusquedaMatricula('');
+                        }
+                      }}
+                      onFocus={() => setFocusNombre(true)}
+                      onBlur={() => setTimeout(() => setFocusNombre(false), 180)}
+                      placeholder="Escribe para filtrar por nombre..."
+                    />
+                    {focusNombre && profesoresFiltradosPorNombre.length > 0 && (
+                      <ul className="searchable-dropdown">
+                        {profesoresFiltradosPorNombre.slice(0, 50).map((profesor) => (
+                          <li
+                            key={profesor.id_profesor}
+                            onMouseDown={(e) => { e.preventDefault(); seleccionarProfesor(profesor); }}
+                          >
+                            {profesor.nombre_profesor}
+                            <small>No. de trabajador: {profesor.id_profesor}</small>
+                          </li>
+                        ))}
+                        {profesoresFiltradosPorNombre.length > 50 && (
+                          <li style={{ color: '#9CA3AF', cursor: 'default', fontSize: '0.85rem' }}>
+                            Escribe más para afinar ({(profesoresFiltradosPorNombre.length - 50)} más)
+                          </li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
                 </div>
 
                 <div className="form-group">
-                  <label>Seleccionar por Matrícula</label>
-                  <select
-                    value={profesorSeleccionado?.id_profesor || ''}
-                    onChange={handleSeleccionarProfesorPorMatricula}
-                  >
-                    <option value="">-- Selecciona un maestro por matrícula --</option>
-                    {profesores.map((profesor) => (
-                      <option key={profesor.id_profesor} value={profesor.id_profesor}>
-                        {profesor.id_profesor} - {profesor.nombre_profesor}
-                      </option>
-                    ))}
-                  </select>
+                  <label>Buscar por No. de trabajador</label>
+                  <div className="searchable-select-wrap">
+                    <input
+                      type="text"
+                      value={busquedaMatricula}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setBusquedaMatricula(v);
+                        if (!v.trim()) limpiarSeleccionProfesor();
+                        else if (profesorSeleccionado && v !== profesorSeleccionado.id_profesor) {
+                          setProfesorSeleccionado(null);
+                          setFormData(prev => ({ ...prev, id_usuario: '', nombre_usuario: '', contraseña: '' }));
+                          setBusquedaNombre('');
+                        }
+                      }}
+                      onFocus={() => setFocusMatricula(true)}
+                      onBlur={() => setTimeout(() => setFocusMatricula(false), 180)}
+                      placeholder="Escribe para filtrar por matrícula..."
+                    />
+                    {focusMatricula && profesoresFiltradosPorMatricula.length > 0 && (
+                      <ul className="searchable-dropdown">
+                        {profesoresFiltradosPorMatricula.slice(0, 50).map((profesor) => (
+                          <li
+                            key={profesor.id_profesor}
+                            onMouseDown={(e) => { e.preventDefault(); seleccionarProfesor(profesor); }}
+                          >
+                            <strong>{profesor.id_profesor}</strong>
+                            <small>{profesor.nombre_profesor}</small>
+                          </li>
+                        ))}
+                        {profesoresFiltradosPorMatricula.length > 50 && (
+                          <li style={{ color: '#9CA3AF', cursor: 'default', fontSize: '0.85rem' }}>
+                            Escribe más para afinar ({(profesoresFiltradosPorMatricula.length - 50)} más)
+                          </li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
                 </div>
 
                 <div className="form-group">
-                  <label>Matrícula *</label>
+                  <label>No. de trabajador *</label>
                   <input
                     type="text"
                     value={formData.id_usuario}
@@ -632,7 +821,7 @@ const AdminUsuarios = ({ user, onLogout }) => {
             ) : (
               <>
                 <div className="form-group">
-                  <label>Matrícula</label>
+                  <label>No. de trabajador</label>
                   <input
                     type="text"
                     value={formData.id_usuario}
@@ -773,7 +962,7 @@ const AdminUsuarios = ({ user, onLogout }) => {
                 }}
               />
               <small style={{ color: '#6B7280', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>
-                💡 Si dejas vacío, se sincronizarán automáticamente todas las carreras y todos los grupos del periodo.
+                Si dejas vacío, se sincronizarán automáticamente todas las carreras y todos los grupos del periodo.
               </small>
             </div>
 
@@ -784,11 +973,11 @@ const AdminUsuarios = ({ user, onLogout }) => {
                   checked={sincronizacionData.limpiarDatos}
                   onChange={(e) => setSincronizacionData({ ...sincronizacionData, limpiarDatos: e.target.checked })}
                 />
-                <span>🗑️ Borrar datos existentes antes de insertar</span>
+                <span>Borrar datos existentes antes de insertar</span>
               </label>
               <div style={{ marginLeft: '24px', marginTop: '8px' }}>
-                <small style={{ color: '#EF4444', display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                  ⚠️ ADVERTENCIA: Si está marcado, se eliminarán TODOS los datos de:
+                <small style={{ color: '#6B7280', display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                  ADVERTENCIA: Si está marcado, se eliminarán TODOS los datos de:
                 </small>
                 <ul style={{ margin: '4px 0', paddingLeft: '20px', color: '#6B7280', fontSize: '0.9rem' }}>
                   <li>Carreras</li>
@@ -800,10 +989,10 @@ const AdminUsuarios = ({ user, onLogout }) => {
                   <li>Periodos</li>
                 </ul>
                 <small style={{ color: '#10B981', display: 'block', marginTop: '8px', fontWeight: '500' }}>
-                  ✅ Los usuarios NO se eliminarán
+                  Los usuarios NO se eliminarán
                 </small>
                 <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#F3F4F6', borderRadius: '6px' }}>
-                  <strong style={{ color: '#374151', fontSize: '0.85rem', display: 'block', marginBottom: '4px' }}>💡 Cuándo usar:</strong>
+                  <strong style={{ color: '#374151', fontSize: '0.85rem', display: 'block', marginBottom: '4px' }}>Cuándo usar:</strong>
                   <ul style={{ margin: '4px 0', paddingLeft: '20px', color: '#6B7280', fontSize: '0.85rem' }}>
                     <li><strong>Marcar:</strong> Primera sincronización completa o cuando quieres reemplazar todos los datos</li>
                     <li><strong>No marcar:</strong> Actualización incremental o cuando solo quieres agregar/actualizar datos nuevos</li>
@@ -834,6 +1023,448 @@ const AdminUsuarios = ({ user, onLogout }) => {
               >
                 {sincronizando ? 'Sincronizando...' : 'Sincronizar'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para ver/copiar credenciales */}
+      {showModalCredenciales && credencialesUsuario && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="modal-content" style={{ 
+            maxWidth: '520px',
+            width: '90%',
+            backgroundColor: '#fff',
+            borderRadius: '12px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            padding: '0',
+            overflow: 'hidden'
+          }}>
+            {/* Header */}
+            <div style={{
+              backgroundColor: '#3B82F6',
+              color: '#fff',
+              padding: '20px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <ShareIcon style={{ fontSize: '20px' }} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+                  Credenciales de Usuario
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', opacity: 0.9 }}>
+                  {credencialesUsuario.nombre_usuario}
+                </p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: '24px' }}>
+              <div style={{
+                backgroundColor: '#F9FAFB',
+                border: '1px solid #E5E7EB',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    fontSize: '11px', 
+                    fontWeight: '600', 
+                    color: '#6B7280', 
+                    marginBottom: '8px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    Usuario (No. de trabajador)
+                  </label>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'stretch', 
+                    gap: '8px' 
+                  }}>
+                    <input
+                      type="text"
+                      value={credencialesUsuario.id_usuario}
+                      readOnly
+                      onFocus={(e) => e.target.select()}
+                      style={{
+                        flex: 1,
+                        padding: '12px 14px',
+                        borderRadius: '6px',
+                        border: '1px solid #D1D5DB',
+                        backgroundColor: '#fff',
+                        fontFamily: 'monospace',
+                        fontSize: '15px',
+                        fontWeight: '500',
+                        color: '#111827',
+                        cursor: 'text',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={() => handleCopiarCredenciales(credencialesUsuario.id_usuario)}
+                      className="btn-copiar-credenciales"
+                      style={{
+                        padding: '12px 16px',
+                        backgroundColor: '#2563EB',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontWeight: '500',
+                        fontSize: '14px',
+                        transition: 'all 0.2s ease',
+                        minWidth: '100px',
+                        justifyContent: 'center'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#1D4ED8';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#2563EB';
+                      }}
+                      title="Copiar usuario"
+                    >
+                      <CopyIcon style={{ fontSize: '16px' }} />
+                      <span>Copiar</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '0' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    fontSize: '11px', 
+                    fontWeight: '600', 
+                    color: '#6B7280', 
+                    marginBottom: '8px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    Contraseña
+                  </label>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'stretch', 
+                    gap: '8px' 
+                  }}>
+                    <input
+                      type="text"
+                      value={credencialesUsuario.contraseña}
+                      readOnly
+                      onFocus={(e) => e.target.select()}
+                      style={{
+                        flex: 1,
+                        padding: '12px 14px',
+                        borderRadius: '6px',
+                        border: '1px solid #D1D5DB',
+                        backgroundColor: '#fff',
+                        fontFamily: 'monospace',
+                        fontSize: '15px',
+                        fontWeight: '500',
+                        color: '#111827',
+                        cursor: 'text',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={() => handleCopiarCredenciales(credencialesUsuario.contraseña)}
+                      className="btn-copiar-credenciales"
+                      style={{
+                        padding: '12px 16px',
+                        backgroundColor: '#2563EB',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontWeight: '500',
+                        fontSize: '14px',
+                        transition: 'all 0.2s ease',
+                        minWidth: '100px',
+                        justifyContent: 'center'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#1D4ED8';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#2563EB';
+                      }}
+                      title="Copiar contraseña"
+                    >
+                      <CopyIcon style={{ fontSize: '16px' }} />
+                      <span>Copiar</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Copiar todo */}
+              <button
+                onClick={() => handleCopiarCredenciales(`Usuario: ${credencialesUsuario.id_usuario}\nContraseña: ${credencialesUsuario.contraseña}`)}
+                className="btn-copiar-todo"
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  backgroundColor: '#2563EB',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  fontWeight: '600',
+                  fontSize: '15px',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1D4ED8';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#2563EB';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
+                }}
+              >
+                <CopyIcon style={{ fontSize: '18px' }} />
+                <span>Copiar Usuario y Contraseña</span>
+              </button>
+
+              <p style={{
+                marginTop: '16px',
+                fontSize: '12px',
+                color: '#6B7280',
+                textAlign: 'center',
+                lineHeight: '1.5'
+              }}>
+              
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              padding: '16px 24px',
+              borderTop: '1px solid #E5E7EB',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              backgroundColor: '#F9FAFB'
+            }}>
+              <button 
+                onClick={() => {
+                  setShowModalCredenciales(false);
+                  setCredencialesUsuario(null);
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#6B7280',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#4B5563';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#6B7280';
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Componente de Alerta Personalizado */}
+      {alertState.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+          animation: 'fadeIn 0.2s ease'
+        }}>
+          <div style={{
+            backgroundColor: '#fff',
+            borderRadius: '12px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            maxWidth: '480px',
+            width: '90%',
+            overflow: 'hidden',
+            animation: 'slideUp 0.3s ease'
+          }}>
+            {/* Header con color según tipo */}
+            <div style={{
+              backgroundColor: 
+                alertState.type === 'success' ? '#10B981' :
+                alertState.type === 'error' ? '#6B7280' :
+                alertState.type === 'warning' ? '#F59E0B' :
+                alertState.type === 'confirm' ? '#6366F1' :
+                '#3B82F6',
+              color: '#fff',
+              padding: '20px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                fontWeight: 'bold'
+              }}>
+                {alertState.type === 'success' && 'OK'}
+                {alertState.type === 'error' && 'X'}
+                {alertState.type === 'warning' && '!'}
+                {alertState.type === 'confirm' && '?'}
+                {alertState.type === 'info' && 'i'}
+              </div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', flex: 1 }}>
+                {alertState.title || 
+                  (alertState.type === 'success' ? 'Éxito' :
+                   alertState.type === 'error' ? 'Error' :
+                   alertState.type === 'warning' ? 'Advertencia' :
+                   alertState.type === 'confirm' ? 'Confirmar' :
+                   'Información')}
+              </h3>
+            </div>
+
+            {/* Contenido */}
+            <div style={{ padding: '24px' }}>
+              <div style={{
+                color: '#374151',
+                fontSize: '15px',
+                lineHeight: '1.6',
+                whiteSpace: 'pre-line',
+                marginBottom: alertState.type === 'confirm' ? '0' : '20px'
+              }}>
+                {alertState.message}
+              </div>
+
+              {/* Botones */}
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: alertState.type === 'confirm' ? 'flex-end' : 'flex-end'
+              }}>
+                {alertState.type === 'confirm' && alertState.onCancel && (
+                  <button
+                    onClick={alertState.onCancel}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#F3F4F6',
+                      color: '#374151',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                      fontSize: '14px',
+                      transition: 'all 0.2s ease',
+                      minWidth: '100px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = '#E5E7EB';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = '#F3F4F6';
+                    }}
+                  >
+                    {alertState.cancelText}
+                  </button>
+                )}
+                <button
+                  onClick={alertState.onConfirm}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: 
+                      alertState.type === 'success' ? '#10B981' :
+                      alertState.type === 'error' ? '#6B7280' :
+                      alertState.type === 'warning' ? '#F59E0B' :
+                      alertState.type === 'confirm' ? '#6366F1' :
+                      '#3B82F6',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    fontSize: '14px',
+                    transition: 'all 0.2s ease',
+                    minWidth: '100px'
+                  }}
+                  onMouseEnter={(e) => {
+                    const colors = {
+                      success: '#059669',
+                      error: '#4B5563',
+                      warning: '#D97706',
+                      confirm: '#4F46E5',
+                      info: '#2563EB'
+                    };
+                    e.target.style.backgroundColor = colors[alertState.type] || colors.info;
+                  }}
+                  onMouseLeave={(e) => {
+                    const colors = {
+                      success: '#10B981',
+                      error: '#6B7280',
+                      warning: '#F59E0B',
+                      confirm: '#6366F1',
+                      info: '#3B82F6'
+                    };
+                    e.target.style.backgroundColor = colors[alertState.type] || colors.info;
+                  }}
+                >
+                  {alertState.confirmText}
+                </button>
+              </div>
             </div>
           </div>
         </div>

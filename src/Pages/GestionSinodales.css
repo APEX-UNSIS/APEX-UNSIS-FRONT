@@ -230,7 +230,7 @@
 }
 
 .remover-btn {
-  background: #EF4444;
+  background: #6B7280;
   color: white;
   border: none;
   padding: 4px 8px;
@@ -241,7 +241,7 @@
 }
 
 .remover-btn:hover {
-  background: #DC2626;
+  background: #4B5563;
 }
 
 .sin-asignado {
@@ -351,8 +351,8 @@
 }
 
 .disponibilidad-badge.no-disponible {
-  background-color: #FEE2E2;
-  color: #991B1B;
+  background-color: #F3F4F6;
+  color: #6B7280;
 }
 
 .sinodal-info p {
@@ -371,7 +371,7 @@
 }
 
 .eliminar-sinodal-btn {
-  background: #EF4444;
+  background: #6B7280;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -383,7 +383,7 @@
 }
 
 .eliminar-sinodal-btn:hover:not(:disabled) {
-  background: #DC2626;
+  background: #4B5563;
 }
 
 .eliminar-sinodal-btn:disabled {

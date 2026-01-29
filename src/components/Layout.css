@@ -296,8 +296,24 @@
   justify-content: space-between;
   align-items: center;
   z-index: 99;
-  height: 80px;
+  min-height: 80px;
+  height: auto;
   box-sizing: border-box;
+}
+
+.content-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+}
+
+.content-header .carrera-nombre {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 4px;
+  opacity: 0.95;
 }
 
 @media (max-width: 1024px) {

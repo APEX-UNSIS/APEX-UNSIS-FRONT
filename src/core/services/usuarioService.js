@@ -40,6 +40,13 @@ class UsuarioService {
         const response = await this.api.get(`/usuarios/rol/${rol}`);
         return response.data;
     };
+
+    // Resetear contraseña de un usuario
+    resetPassword = async (idUsuario, nuevaContraseña = null) => {
+        const params = nuevaContraseña ? { nueva_contraseña: nuevaContraseña } : {};
+        const response = await this.api.post(`/usuarios/${idUsuario}/reset-password`, null, { params });
+        return response.data;
+    };
 }
 
 export default new UsuarioService(api);

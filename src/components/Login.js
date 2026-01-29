@@ -52,7 +52,7 @@ const Login = () => {
               
               <div className="form-group">
                 <label htmlFor="username" className="form-label">
-                  Nombre de usuario
+                  No. de trabajador
                 </label>
                 <input
                   type="text"
@@ -60,7 +60,7 @@ const Login = () => {
                   className="form-input"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Ej: admin, jefe, servicios"
+                  placeholder="No. de trabajador"
                   required
                 />
               </div>
@@ -75,7 +75,7 @@ const Login = () => {
                   className="form-input"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Contraseña: 123456"
+                  placeholder="Ingresa tu contraseña"
                   required
                 />
               </div>

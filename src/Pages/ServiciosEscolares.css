@@ -254,12 +254,12 @@
 }
 
 .rechazar-btn {
-  background: #EF4444;
+  background: #6B7280;
   color: white;
 }
 
 .rechazar-btn:hover:not(:disabled) {
-  background: #DC2626;
+  background: #4B5563;
 }
 
 .rechazar-btn:disabled {
@@ -321,6 +321,12 @@
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+}
+
+/* Revisar Calendario: ancho grande (selector específico para no ser pisado por .modal-content) */
+.modal-content.modal-revisar-calendario {
+  width: min(98%, 1920px);
+  max-width: 1920px;
 }
 
 .modal-title {
@@ -417,12 +423,184 @@
 }
 
 .btn-rechazar {
-  background: #EF4444;
+  background: #6B7280;
   color: white;
 }
 
 .btn-rechazar:hover {
-  background: #DC2626;
+  background: #4B5563;
+}
+
+/* Modal Revisar Calendario: layout con barra flotante y calendario minimizable (ancho en .modal-content.modal-revisar-calendario) */
+.modal-revisar-calendario {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.modal-revisar-calendario .info-calendario {
+  flex-shrink: 0;
+}
+
+.modal-revisar-calendario .detalle-calendario.minimizable {
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  margin-top: 16px;
+  margin-bottom: 0;
+  padding-right: 6px;
+}
+
+/* Calendario tipo lista (JList): grupos expandir/colapsar */
+.calendario-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.calendario-list-header h4 {
+  margin: 0;
+  color: #0b4a8f;
+  font-size: 1.1rem;
+}
+
+.calendario-list-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-expand-collapse {
+  padding: 6px 12px;
+  border: 1px solid #0ea5e9;
+  background: #fff;
+  color: #0369a1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-expand-collapse:hover {
+  background: #e0f2fe;
+}
+
+.calendario-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.calendario-list-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.calendario-list-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: #f8fafc;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.calendario-list-item-header:hover {
+  background: #f1f5f9;
+}
+
+.calendario-list-chevron {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  color: #64748b;
+}
+
+.calendario-list-item-label {
+  flex: 1;
+}
+
+.calendario-list-item-count {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.calendario-list-item-body {
+  padding: 12px 14px;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+}
+
+.calendario-list-item-body .tabla-calendario {
+  overflow-x: auto;
+}
+
+/* Barra flotante abajo: comentarios + Aprobar + Regresar + Cerrar + Guardar */
+.modal-footer-flotante {
+  flex-shrink: 0;
+  margin-top: 16px;
+  padding: 16px;
+  border-top: 2px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 8px;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.06);
+}
+
+.modal-footer-flotante .form-group {
+  margin-bottom: 12px;
+}
+
+.modal-footer-flotante .form-group label {
+  margin-bottom: 6px;
+}
+
+.modal-footer-flotante textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.footer-flotante-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.footer-flotante-actions .btn-aprobar,
+.footer-flotante-actions .btn-rechazar {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.footer-flotante-actions .modal-cancel,
+.footer-flotante-actions .modal-guardar {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* Styles for grouped tables in modal */

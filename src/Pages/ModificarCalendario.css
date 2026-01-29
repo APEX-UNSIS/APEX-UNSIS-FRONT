@@ -260,6 +260,122 @@
   box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
 }
 
+/* Celda del aula: no recortar el dropdown y que quede encima de otras filas */
+.td-aula-combobox {
+  position: relative;
+  overflow: visible;
+}
+/* Aula combobox (JList / filtrar al escribir) - z-index alto para que no quede bajo otras filas */
+.aula-combobox-wrap {
+  position: relative;
+  min-width: 160px;
+  z-index: 1000;
+  isolation: isolate;
+}
+.aula-combobox-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.aula-combobox-input-wrap .aula-combobox-input {
+  width: 100%;
+  min-width: 130px;
+  padding-right: 32px;
+}
+.aula-combobox-chevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #6B7280;
+  pointer-events: none;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.aula-combobox-wrap:focus-within .aula-combobox-chevron {
+  color: #1E3A8A;
+  transform: translateY(-50%) rotate(180deg);
+}
+.aula-combobox-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 1001;
+  overflow: hidden;
+  animation: aula-dropdown-in 0.15s ease;
+  pointer-events: auto;
+}
+/* Dropdown renderizado en Portal (fuera de la tabla): evita parpadeo al mover el mouse */
+.aula-combobox-dropdown-portal {
+  z-index: 10000;
+  position: fixed;
+  top: auto;
+  left: auto;
+  right: auto;
+  margin-top: 0;
+}
+@keyframes aula-dropdown-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.aula-combobox-list {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.aula-combobox-list li {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.12s ease;
+}
+.aula-combobox-list li + li {
+  border-top: 1px solid #F3F4F6;
+}
+.aula-combobox-list li:hover {
+  background: #EFF6FF;
+}
+.aula-combobox-item-name {
+  display: block;
+  font-weight: 500;
+  color: #111827;
+}
+.aula-combobox-list li:hover .aula-combobox-item-name {
+  color: #1E3A8A;
+}
+.aula-combobox-item-cap {
+  display: block;
+  font-size: 0.75rem;
+  color: #6B7280;
+  margin-top: 2px;
+}
+.aula-combobox-empty {
+  color: #6B7280;
+  cursor: default;
+  padding: 14px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.aula-combobox-empty:hover {
+  background: #fff;
+}
+.aula-combobox-footer {
+  padding: 8px 14px;
+  font-size: 0.75rem;
+  color: #6B7280;
+  background: #F9FAFB;
+  border-top: 1px solid #E5E7EB;
+}
+
 .edit-select {
   background: white;
 }
@@ -321,12 +437,12 @@
 }
 
 .eliminar-horario-btn {
-  background-color: #EF4444;
+  background-color: #6B7280;
   color: white;
 }
 
 .eliminar-horario-btn:hover {
-  background-color: #DC2626;
+  background-color: #4B5563;
 }
 
 /* Botones de acción footer */
@@ -380,12 +496,12 @@
 }
 
 .salir-btn {
-  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%);
   color: white;
 }
 
 .salir-btn:hover {
-  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  background: linear-gradient(135deg, #4B5563 0%, #374151 100%);
   transform: translateY(-3px);
   box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
 }

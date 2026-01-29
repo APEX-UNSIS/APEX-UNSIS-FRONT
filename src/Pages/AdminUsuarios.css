@@ -1,3 +1,23 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .admin-usuarios-container {
   display: flex;
   min-height: 100vh;
@@ -210,21 +230,62 @@
   margin: 0;
 }
 
+.header-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Botones del header: mismo aspecto; prioridad a Agregar usuario */
+.header-action-btn,
+.agregar-btn,
+.sincronizar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.header-action-btn:hover,
+.agregar-btn:hover,
+.sincronizar-btn:hover {
+  transform: translateY(-1px);
+}
+
+.header-action-btn:active,
+.agregar-btn:active,
+.sincronizar-btn:active {
+  transform: translateY(0);
+}
+
 .agregar-btn {
   background: linear-gradient(135deg, #10B981 0%, #059669 100%);
   color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
 }
 
 .agregar-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.sincronizar-btn {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+}
+
+.sincronizar-btn:hover {
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
 }
 
 /* Tabla de usuarios */
@@ -301,8 +362,8 @@
 }
 
 .estado-badge.inactivo {
-  background-color: #FEE2E2;
-  color: #991B1B;
+  background-color: #F3F4F6;
+  color: #6B7280;
 }
 
 /* Botones de acciones */
@@ -330,12 +391,12 @@
 }
 
 .eliminar-btn {
-  background-color: #EF4444;
+  background-color: #6B7280;
   color: white;
 }
 
 .eliminar-btn:hover {
-  background-color: #DC2626;
+  background-color: #4B5563;
 }
 
 /* Estadísticas */
@@ -424,6 +485,59 @@
   outline: none;
   border-color: #1E3A8A;
   box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+}
+
+/* Buscador por nombre/matrícula (filtro al escribir) */
+.searchable-select-wrap {
+  position: relative;
+  width: 100%;
+}
+.searchable-select-wrap input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #E5E7EB;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+.searchable-select-wrap input:focus {
+  outline: none;
+  border-color: #1E3A8A;
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+}
+.searchable-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+  z-index: 50;
+  list-style: none;
+  padding: 6px 0;
+  margin: 0;
+}
+.searchable-dropdown li {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #374151;
+  transition: background 0.15s ease;
+}
+.searchable-dropdown li:hover {
+  background: #EFF6FF;
+  color: #1E40AF;
+}
+.searchable-dropdown li small {
+  display: block;
+  font-size: 0.8rem;
+  color: #6B7280;
+  margin-top: 2px;
 }
 
 .modal-actions {
@@ -645,9 +759,18 @@
     padding: 8px 6px;
   }
 
-  .agregar-btn {
+  .header-actions {
     width: 100%;
-    padding: 10px 20px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+
+  .agregar-btn,
+  .sincronizar-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 0.85rem;
   }
 
   .modal-content {

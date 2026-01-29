@@ -149,13 +149,34 @@ const VerCalendario = ({ user, onLogout }) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {gruposExamenes[grupo].map((examen, i) => (
+                        {gruposExamenes[grupo]
+                          .sort((a, b) => {
+                            // Ordenar por asignatura (id_materia) ascendente, como en API horarios/.../grupo/706/materias
+                            const asignaturaA = a.id_materia || a.asignatura || '';
+                            const asignaturaB = b.id_materia || b.asignatura || '';
+                            const cmp = (asignaturaA || '').localeCompare(asignaturaB || '', undefined, { numeric: true });
+                            if (cmp !== 0) return cmp;
+                            // Segundo criterio: fecha
+                            if (!a.fecha && !b.fecha) return 0;
+                            if (!a.fecha) return 1;
+                            if (!b.fecha) return -1;
+                            try {
+                              const parseFecha = (fechaStr) => {
+                                const [dia, mes, año] = fechaStr.split('/');
+                                return new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia));
+                              };
+                              return parseFecha(a.fecha) - parseFecha(b.fecha);
+                            } catch {
+                              return 0;
+                            }
+                          })
+                          .map((examen, i) => (
                           <tr key={i}>
                             <td className="materia-cell">{examen.materia || 'N/A'}</td>
                             <td className="profesor-cell">{examen.profesor || 'N/A'}</td>
                             <td className="fecha-cell">{examen.fecha || 'N/A'}</td>
                             <td className="hora-cell">{examen.hora || 'N/A'}</td>
-                            <td className="aula-cell">{examen.aula || 'N/A'}</td>
+                            <td className="aula-cell" style={examen.aula_conflicto ? { color: '#b91c1c', fontWeight: 600 } : undefined}>{examen.aula || 'N/A'}</td>
                           </tr>
                         ))}
                       </tbody>

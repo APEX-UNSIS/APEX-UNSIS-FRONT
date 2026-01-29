@@ -203,8 +203,8 @@ const GenerarCalendario = ({ user, onLogout }) => {
             <div style={{ 
               padding: '40px', 
               textAlign: 'center',
-              background: '#FEE2E2',
-              color: '#991B1B',
+              background: '#F3F4F6',
+              color: '#6B7280',
               borderRadius: '8px'
             }}>
               <h3>No tienes una carrera asignada</h3>
@@ -246,15 +246,15 @@ const GenerarCalendario = ({ user, onLogout }) => {
                 borderRadius: '6px', 
                 marginBottom: '20px' 
               }}>
-                ⚠️ Ya existe un calendario generado para tu carrera. Si generas uno nuevo, 
+                Ya existe un calendario generado para tu carrera. Si generas uno nuevo, 
                 puedes elegir si deseas eliminar el existente.
               </div>
             )}
 
             {error && (
               <div style={{ 
-                background: '#FEE2E2', 
-                color: '#991B1B', 
+                background: '#F3F4F6', 
+                color: '#6B7280', 
                 padding: '15px', 
                 borderRadius: '6px', 
                 marginBottom: '20px' 
@@ -385,7 +385,7 @@ const GenerarCalendario = ({ user, onLogout }) => {
                             style={{
                               background: 'none',
                               border: 'none',
-                              color: '#EF4444',
+                              color: '#6B7280',
                               cursor: 'pointer',
                               fontSize: '16px',
                               padding: '0',

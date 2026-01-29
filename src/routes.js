@@ -13,7 +13,7 @@ export const ROUTES = {
   VER_CALENDARIO: '/ver-calendario',
   VER_CALENDARIO_SERVICIOS: '/ver-calendario-servicios',
   MODIFICAR_CALENDARIO: '/modificar-calendario',
-  GESTION_SINODALES: '/gestion-sinodales',
+  GESTION_SINODALES: '/gestion',
   
   // Rutas de Administrador
   ADMIN_USUARIOS: '/admin-usuarios',
@@ -40,7 +40,7 @@ export const ROUTES_BY_ROLE = {
     { path: ROUTES.GENERAR_CALENDARIO, label: 'Calendario de Examenes', icon: CalendarIcon },
     { path: ROUTES.VER_CALENDARIO, label: 'Ver Calendarios', icon: EyeIcon },
     { path: ROUTES.MODIFICAR_CALENDARIO, label: 'Modificar Calendario', icon: EditIcon },
-    { path: ROUTES.GESTION_SINODALES, label: 'Gestión de Sinodales', icon: GraduateIcon },
+    { path: ROUTES.GESTION_SINODALES, label: 'Gestión', icon: GraduateIcon },
   ],
   servicios: [
     { path: ROUTES.HOME, label: 'Inicio', icon: HomeIcon },

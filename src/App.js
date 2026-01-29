@@ -9,7 +9,7 @@ import VerCalendarioServicios from './Pages/VerCalendarioServicios';
 import ModificarCalendario from './Pages/ModificarCalendario';
 import AdminUsuarios from './Pages/AdminUsuarios';
 import ServiciosEscolares from './Pages/ServiciosEscolares';
-import GestionSinodales from './Pages/GestionSinodales';
+import Gestion from './Pages/Gestion';
 import NotFound from './components/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './core/auth/hooks/useAuth';
@@ -83,7 +83,7 @@ function AppContent() {
             path={ROUTES.GESTION_SINODALES} 
             element={
               <ProtectedRoute allowedRoles={['jefe']}>
-                <GestionSinodales user={user} onLogout={logout} />
+                <Gestion user={user} onLogout={logout} />
               </ProtectedRoute>
             } 
           />

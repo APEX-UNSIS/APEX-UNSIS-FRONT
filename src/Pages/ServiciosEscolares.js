@@ -4,7 +4,7 @@ import { ROUTES } from '../config/routes';
 import Layout from '../components/Layout';
 import calendarioService from '../core/services/calendarioService';
 import './ServiciosEscolares.css';
-import { EditIcon, CheckIcon, TrashIcon } from '../icons';
+import { EditIcon, CheckIcon, TrashIcon, ChevronDownIcon, ChevronRightIcon } from '../icons';
 
 const ServiciosEscolares = ({ user, onLogout }) => {
   const navigate = useNavigate();
@@ -16,13 +16,9 @@ const ServiciosEscolares = ({ user, onLogout }) => {
   const [observaciones, setObservaciones] = useState('');
   const [filterEstado, setFilterEstado] = useState('todos');
   const [filterCarrera, setFilterCarrera] = useState('todos');
+  const [gruposExpandidos, setGruposExpandidos] = useState({});
 
   useEffect(() => {
-    cargarCalendarios();
-  }, []);
-
-  useEffect(() => {
-    // Recargar cuando cambie el filtro de estado
     cargarCalendarios();
   }, [filterEstado]);
 
@@ -30,10 +26,8 @@ const ServiciosEscolares = ({ user, onLogout }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Cargando calendarios para Servicios Escolares...', filterEstado);
       const estadoFiltro = filterEstado === 'todos' ? null : filterEstado;
       const data = await calendarioService.obtenerParaServicios(estadoFiltro);
-      console.log('Calendarios recibidos:', data);
       setCalendarios(data || []);
     } catch (err) {
       console.error('Error cargando calendarios:', err);
@@ -47,7 +41,25 @@ const ServiciosEscolares = ({ user, onLogout }) => {
   const handleRevisar = (calendario) => {
     setSelectedCalendario(calendario);
     setObservaciones(calendario.observaciones || '');
+    setGruposExpandidos({});
     setShowModal(true);
+  };
+
+  const toggleGrupo = (grupo) => {
+    setGruposExpandidos(prev => ({ ...prev, [grupo]: !prev[grupo] }));
+  };
+
+  const expandirTodoCalendario = () => {
+    if (!selectedCalendario?.examenes?.length) return;
+    const g = (selectedCalendario.examenes || []).reduce((acc, ex) => {
+      (ex.grupos || []).forEach(gr => { acc[gr] = true; });
+      return acc;
+    }, {});
+    setGruposExpandidos(g);
+  };
+
+  const colapsarTodoCalendario = () => {
+    setGruposExpandidos({});
   };
 
   const handleAprobar = async (calendario) => {
@@ -68,7 +80,7 @@ const ServiciosEscolares = ({ user, onLogout }) => {
         calendario.id_evaluacion
       );
       
-      alert(`✅ ${resultado.mensaje}\n${resultado.solicitudes_aprobadas} exámenes aprobados.`);
+      alert(`${resultado.mensaje}\n${resultado.solicitudes_aprobadas} exámenes aprobados.`);
       await cargarCalendarios();
       setShowModal(false);
     } catch (err) {
@@ -102,7 +114,7 @@ const ServiciosEscolares = ({ user, onLogout }) => {
         motivo
       );
       
-      alert(`✅ ${resultado.mensaje}\n${resultado.solicitudes_rechazadas} exámenes regresados.`);
+      alert(`${resultado.mensaje}\n${resultado.solicitudes_rechazadas} exámenes regresados.`);
       await cargarCalendarios();
       setShowModal(false);
     } catch (err) {
@@ -131,7 +143,7 @@ const ServiciosEscolares = ({ user, onLogout }) => {
       case 'pendiente': return '#F59E0B';
       case 'revisado': return '#3B82F6';
       case 'aprobado': return '#10B981';
-      case 'rechazado': return '#EF4444';
+      case 'rechazado': return '#6B7280';
       case 'con_correcciones': return '#F97316';
       default: return '#6B7280';
     }
@@ -301,12 +313,13 @@ const ServiciosEscolares = ({ user, onLogout }) => {
                             onClick={() => {
                               setSelectedCalendario(calendario);
                               setObservaciones(calendario.observaciones || '');
+                              setGruposExpandidos({});
                               setShowModal(true);
                             }}
                             disabled={calendario.estado === 'rechazado'}
                             style={{ 
-                              backgroundColor: calendario.estado === 'rechazado' ? '#9CA3AF' : '#EF4444', 
-                              borderColor: calendario.estado === 'rechazado' ? '#9CA3AF' : '#EF4444', 
+                              backgroundColor: calendario.estado === 'rechazado' ? '#9CA3AF' : '#6B7280', 
+                              borderColor: calendario.estado === 'rechazado' ? '#9CA3AF' : '#6B7280', 
                               color: '#fff',
                               cursor: calendario.estado === 'rechazado' ? 'not-allowed' : 'pointer'
                             }}
@@ -348,7 +361,7 @@ const ServiciosEscolares = ({ user, onLogout }) => {
       {/* Modal de revisión */}
       {showModal && selectedCalendario && (
       <div className="modal-overlay">
-        <div className="modal-content" style={{ width: '90%', maxWidth: '1100px' }}>
+        <div className="modal-content modal-revisar-calendario">
             <h3 className="modal-title">Revisar Calendario - {selectedCalendario.nombre_carrera}</h3>
             
             <div className="info-calendario">
@@ -361,111 +374,122 @@ const ServiciosEscolares = ({ user, onLogout }) => {
               )}
               <p><strong>Estado actual:</strong> {getEstadoTexto(selectedCalendario.estado)}</p>
             </div>
-            
-            <div className="form-group">
-              <label>Comentarios / Motivo de rechazo:</label>
-              <textarea
-                value={observaciones}
-                onChange={(e) => setObservaciones(e.target.value)}
-                rows="4"
-                placeholder="Ingresa tus comentarios u observaciones sobre este calendario. Si regresas el calendario, estos comentarios serán visibles para el jefe de carrera."
-              />
-            </div>
 
-            {/* Mostrar calendario (exámenes) del calendario seleccionado agrupado por grupo */}
+            {/* Calendario minimizable tipo lista (JList): grupos expandir/colapsar */}
             {selectedCalendario.examenes && selectedCalendario.examenes.length > 0 && (
-              <div className="detalle-calendario">
-                <h4>Calendario - Grupos</h4>
-                {Object.keys(groupedHorarios).sort().map((grupo) => (
-                  <div key={grupo} className="grupo-section" style={{ marginBottom: 18 }}>
-                    <h5 style={{ marginBottom: 8 }}>Grupo {grupo}</h5>
-                    <div className="tabla-calendario">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>MATERIA</th>
-                            <th>DOCENTE</th>
-                            <th>FECHA</th>
-                            <th>HORA</th>
-                            <th>AULA</th>
-                            <th>TIPO</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {groupedHorarios[grupo].map((h, i) => (
-                            <tr key={i}>
-                              <td>{h.materia || 'N/A'}</td>
-                              <td>{h.profesor || 'N/A'}</td>
-                              <td>{h.fecha || 'N/A'}</td>
-                              <td>{h.hora || 'N/A'}</td>
-                              <td>{h.aula || 'N/A'}</td>
-                              <td>{h.tipo || selectedCalendario.nombre_evaluacion || 'N/A'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+              <div className="detalle-calendario minimizable">
+                <div className="calendario-list-header">
+                  <h4>Calendario - Grupos</h4>
+                  <div className="calendario-list-actions">
+                    <button type="button" className="btn-expand-collapse" onClick={expandirTodoCalendario}>Expandir todo</button>
+                    <button type="button" className="btn-expand-collapse" onClick={colapsarTodoCalendario}>Colapsar todo</button>
                   </div>
-                ))}
+                </div>
+                <ul className="calendario-list">
+                  {Object.keys(groupedHorarios).sort().map((grupo) => {
+                    const expanded = !!gruposExpandidos[grupo];
+                    const count = groupedHorarios[grupo].length;
+                    return (
+                      <li key={grupo} className="calendario-list-item">
+                        <button
+                          type="button"
+                          className="calendario-list-item-header"
+                          onClick={() => toggleGrupo(grupo)}
+                        >
+                          {expanded ? (
+                            <ChevronDownIcon className="calendario-list-chevron" />
+                          ) : (
+                            <ChevronRightIcon className="calendario-list-chevron" />
+                          )}
+                          <span className="calendario-list-item-label">Grupo {grupo}</span>
+                          <span className="calendario-list-item-count">{count} exámenes</span>
+                        </button>
+                        {expanded && (
+                          <div className="calendario-list-item-body">
+                            <div className="tabla-calendario">
+                              <table>
+                                <thead>
+                                  <tr>
+                                    <th>MATERIA</th>
+                                    <th>DOCENTE</th>
+                                    <th>FECHA</th>
+                                    <th>HORA</th>
+                                    <th>AULA</th>
+                                    <th>TIPO</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {groupedHorarios[grupo].map((h, i) => (
+                                    <tr key={i}>
+                                      <td>{h.materia || 'N/A'}</td>
+                                      <td>{h.profesor || 'N/A'}</td>
+                                      <td>{h.fecha || 'N/A'}</td>
+                                      <td>{h.hora || 'N/A'}</td>
+                                      <td>{h.aula || 'N/A'}</td>
+                                      <td>{h.tipo || selectedCalendario.nombre_evaluacion || 'N/A'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             )}
-            
-            <div className="acciones-rapidas">
-              <p><strong>Acciones rápidas:</strong></p>
-              <div className="botones-rapidos">
+
+            {/* Barra flotante abajo: comentarios + Aprobar + Regresar + Cerrar + Guardar */}
+            <div className="modal-footer-flotante">
+              <div className="form-group">
+                <label>Comentarios / Motivo de rechazo:</label>
+                <textarea
+                  value={observaciones}
+                  onChange={(e) => setObservaciones(e.target.value)}
+                  rows="3"
+                  placeholder="Ingresa tus comentarios u observaciones. Si regresas el calendario, serán visibles para el jefe de carrera."
+                />
+              </div>
+              <div className="footer-flotante-actions">
                 <button 
                   className="btn-aprobar"
-                  onClick={() => {
-                    handleAprobar(selectedCalendario);
-                  }}
+                  onClick={() => handleAprobar(selectedCalendario)}
                   disabled={selectedCalendario.estado === 'aprobado'}
                   style={{ 
                     backgroundColor: selectedCalendario.estado === 'aprobado' ? '#9CA3AF' : '#10B981', 
-                    borderColor: selectedCalendario.estado === 'aprobado' ? '#9CA3AF' : '#10B981', 
                     color: '#fff',
                     cursor: selectedCalendario.estado === 'aprobado' ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  <CheckIcon style={{marginRight:8}}/>Aprobar con V°B°
+                  <CheckIcon style={{marginRight:6}}/>Aprobar con V°B°
                 </button>
                 <button 
                   className="btn-rechazar"
                   onClick={() => {
-                    if (!observaciones || observaciones.trim() === '') {
-                      alert('Por favor, ingresa un comentario o motivo antes de regresar el calendario.');
+                    if (!observaciones?.trim()) {
+                      alert('Ingresa un comentario o motivo antes de regresar el calendario.');
                       return;
                     }
                     handleRegresarConComentarios(selectedCalendario, observaciones);
                   }}
                   disabled={selectedCalendario.estado === 'rechazado'}
                   style={{ 
-                    backgroundColor: selectedCalendario.estado === 'rechazado' ? '#9CA3AF' : '#EF4444', 
-                    borderColor: selectedCalendario.estado === 'rechazado' ? '#9CA3AF' : '#EF4444', 
+                    backgroundColor: selectedCalendario.estado === 'rechazado' ? '#9CA3AF' : '#6B7280', 
                     color: '#fff',
                     cursor: selectedCalendario.estado === 'rechazado' ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  <TrashIcon style={{marginRight:8}}/>Regresar con comentarios
+                  <TrashIcon style={{marginRight:6}}/>Regresar con comentarios
+                </button>
+                <button className="modal-cancel" onClick={() => { setShowModal(false); setObservaciones(''); }}>
+                  Cerrar
+                </button>
+                <button className="modal-guardar" onClick={handleGuardarObservaciones}>
+                  Guardar comentarios
                 </button>
               </div>
-            </div>
-
-            <div className="modal-actions">
-              <button 
-                className="modal-cancel"
-                onClick={() => {
-                  setShowModal(false);
-                  setObservaciones('');
-                }}
-              >
-                Cerrar
-              </button>
-              <button 
-                className="modal-guardar"
-                onClick={handleGuardarObservaciones}
-              >
-                Guardar comentarios
-              </button>
             </div>
           </div>
         </div>

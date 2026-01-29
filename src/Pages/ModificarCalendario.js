@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { EyeIcon, EditIcon, SaveIcon, TrashIcon, LogoutIcon } from '../icons';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { EyeIcon, EditIcon, SaveIcon, TrashIcon, LogoutIcon, ChevronDownIcon } from '../icons';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../config/routes';
 import Layout from '../components/Layout';
 import calendarioService from '../core/services/calendarioService';
+import aulaService from '../core/services/aulaService';
 import './ModificarCalendario.css';
 
 const ModificarCalendario = ({ user, onLogout }) => {
@@ -11,6 +13,11 @@ const ModificarCalendario = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [examenes, setExamenes] = useState([]);
   const [error, setError] = useState(null);
+  const [aulas, setAulas] = useState([]);
+  const [focusAula, setFocusAula] = useState(false);
+  const aulaListRef = useRef(null);
+  const aulaInputRef = useRef(null);
+  const [aulaDropdownRect, setAulaDropdownRect] = useState(null);
   
   // editando: null | { grupo: string, id_horario: string }
   const [editando, setEditando] = useState(null);
@@ -21,6 +28,35 @@ const ModificarCalendario = ({ user, onLogout }) => {
   useEffect(() => {
     cargarCalendario();
   }, []);
+
+  useEffect(() => {
+    aulaService.getAll().then(setAulas).catch(() => setAulas([]));
+  }, []);
+
+  useEffect(() => {
+    if (focusAula && aulaListRef.current) aulaListRef.current.scrollTop = 0;
+  }, [formData.aula, focusAula]);
+
+  // Posición del dropdown: medir input al abrir y en scroll/resize (para Portal)
+  useEffect(() => {
+    if (!focusAula) {
+      setAulaDropdownRect(null);
+      return;
+    }
+    const updateRect = () => {
+      if (aulaInputRef.current) setAulaDropdownRect(aulaInputRef.current.getBoundingClientRect());
+    };
+    const raf = requestAnimationFrame(() => {
+      updateRect();
+    });
+    window.addEventListener('scroll', updateRect, true);
+    window.addEventListener('resize', updateRect);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', updateRect, true);
+      window.removeEventListener('resize', updateRect);
+    };
+  }, [focusAula]);
 
   const cargarCalendario = async () => {
     try {
@@ -238,7 +274,7 @@ const ModificarCalendario = ({ user, onLogout }) => {
         periodoInfo.id_evaluacion
       );
       
-      alert(`✅ ${resultado.mensaje}\n${resultado.solicitudes_enviadas} exámenes enviados.`);
+      alert(`${resultado.mensaje}\n${resultado.solicitudes_enviadas} exámenes enviados.`);
       // Recargar el calendario para ver el estado actualizado
       await cargarCalendario();
     } catch (err) {
@@ -350,7 +386,7 @@ const ModificarCalendario = ({ user, onLogout }) => {
                 </div>
               )}
               {examenes.length > 0 && examenes[0].motivo_rechazo && (
-                <div className="info-item" style={{ gridColumn: '1 / -1', color: '#EF4444' }}>
+                <div className="info-item" style={{ gridColumn: '1 / -1', color: '#6B7280' }}>
                   <strong>Comentarios de Servicios Escolares:</strong> {examenes[0].motivo_rechazo}
                 </div>
               )}
@@ -426,14 +462,79 @@ const ModificarCalendario = ({ user, onLogout }) => {
                                     />
                                   </div>
                                 </td>
-                                <td>
-                                  <input
-                                    type="text"
-                                    name="aula"
-                                    value={formData.aula || ''}
-                                    onChange={handleInputChange}
-                                    className="edit-input"
-                                  />
+                                <td className="td-aula-combobox">
+                                  <div className="aula-combobox-wrap">
+                                    <span className="aula-combobox-input-wrap">
+                                      <input
+                                        ref={aulaInputRef}
+                                        type="text"
+                                        name="aula"
+                                        value={formData.aula || ''}
+                                        onChange={handleInputChange}
+                                        onFocus={() => setFocusAula(true)}
+                                        onBlur={() => setTimeout(() => setFocusAula(false), 180)}
+                                        className="edit-input aula-combobox-input"
+                                        placeholder="Escribe para filtrar aula..."
+                                        autoComplete="off"
+                                      />
+                                      <ChevronDownIcon className="aula-combobox-chevron" aria-hidden />
+                                    </span>
+                                    {focusAula && aulaDropdownRect && (() => {
+                                        const filtradas = (formData.aula || '').trim()
+                                          ? (aulas || []).filter((a) =>
+                                              (a.nombre_aula || '')
+                                                .toLowerCase()
+                                                .includes((formData.aula || '').trim().toLowerCase())
+                                            )
+                                          : (aulas || []);
+                                        const mostrar = filtradas.slice(0, 50);
+                                        const dropdownEl = (
+                                          <div
+                                            className="aula-combobox-dropdown aula-combobox-dropdown-portal"
+                                            style={{
+                                              position: 'fixed',
+                                              left: aulaDropdownRect.left,
+                                              top: aulaDropdownRect.bottom + 4,
+                                              width: aulaDropdownRect.width,
+                                              minWidth: 200,
+                                            }}
+                                            onMouseDown={(e) => e.preventDefault()}
+                                          >
+                                            <ul className="aula-combobox-list" ref={aulaListRef}>
+                                              {filtradas.length === 0 ? (
+                                                <li className="aula-combobox-empty">
+                                                  {(aulas || []).length === 0
+                                                    ? 'No hay aulas cargadas'
+                                                    : `No hay coincidencias para "${(formData.aula || '').trim()}"`}
+                                                </li>
+                                              ) : (
+                                                mostrar.map((a) => (
+                                                  <li
+                                                    key={a.id_aula}
+                                                    onMouseDown={(e) => {
+                                                      e.preventDefault();
+                                                      setFormData((prev) => ({ ...prev, aula: a.nombre_aula || '' }));
+                                                      setFocusAula(false);
+                                                    }}
+                                                  >
+                                                    <span className="aula-combobox-item-name">{a.nombre_aula}</span>
+                                                    {a.capacidad != null && (
+                                                      <small className="aula-combobox-item-cap">{a.capacidad} lugares</small>
+                                                    )}
+                                                  </li>
+                                                ))
+                                              )}
+                                            </ul>
+                                            {filtradas.length > 50 && (
+                                              <div className="aula-combobox-footer">
+                                                Mostrando 50 de {filtradas.length} — escribe más para afinar
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                        return createPortal(dropdownEl, document.body);
+                                      })()}
+                                  </div>
                                 </td>
                                 <td>
                                   <div className="acciones-edit">
