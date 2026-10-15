@@ -1,0 +1,15 @@
+.ver-calendario-servicios-placeholder {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.ver-calendario-servicios-placeholder p {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+}
+
+.ver-calendario-servicios-placeholder .sub {
+  font-size: 0.95rem;
+  color: #94a3b8;
+}

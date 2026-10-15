@@ -13,4 +13,25 @@ api.interceptors.request.use((config)=>{
     return config;
 });
 
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            if (!error.config?.url?.includes('/auth/login')) {
+                window.location.href = '/';
+            }
+        }
+        console.error('Error en petición API:', {
+            url: error.config?.url,
+            method: error.config?.method,
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message
+        });
+        return Promise.reject(error);
+    }
+);
+
 export default api;

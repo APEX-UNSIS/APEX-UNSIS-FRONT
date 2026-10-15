@@ -77,8 +77,8 @@ const Dashboard = ({ user, onLogout }) => {
               {user.rol === 'servicios' && <ClipboardIcon />}
             </div>
             <div className="user-details">
-              <span className="user-name">{user.nombre}</span>
-              <span className="user-email">{user.usuario || user.email}</span>
+              <span className="user-name">{user.nombre_usuario || user.nombre || 'Usuario'}</span>
+              <span className="user-email">{user.id_usuario || user.usuario || user.email || 'Sin ID'}</span>
             </div>
           </div>
           <button className="logout-btn" onClick={handleLogout}>
@@ -92,7 +92,7 @@ const Dashboard = ({ user, onLogout }) => {
         <header className="content-header">
           <h1 className="content-title">APEX-UNSIS</h1>
           <div className="header-actions">
-            <span className="welcome-text">Bienvenido, {user.nombre}</span>
+            <span className="welcome-text">Bienvenido, {user.nombre_usuario || user.nombre || 'Usuario'}</span>
             <span className="role-indicator">
               {user.rol === 'admin' && 'Modo Administrador'}
               {user.rol === 'jefe' && 'Modo Jefe de Carrera'}

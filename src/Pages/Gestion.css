@@ -1,0 +1,67 @@
+.gestion-container {
+  padding: 20px;
+  min-height: 100vh;
+  background-color: #F9FAFB;
+}
+
+.content-area {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 24px;
+}
+
+/* Pestañas */
+.tabs-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #E5E7EB;
+}
+
+.tab-button {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 16px;
+  font-weight: 500;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -2px;
+}
+
+.tab-button:hover {
+  color: #3B82F6;
+  background-color: #F3F4F6;
+}
+
+.tab-button.active {
+  color: #3B82F6;
+  border-bottom-color: #3B82F6;
+  font-weight: 600;
+}
+
+.tab-content {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Ajustes para componentes anidados */
+.tab-content .gestion-sinodales-container,
+.tab-content .gestion-materias-container {
+  padding: 0;
+  background: transparent;
+}
+
+.tab-content .content-area {
+  max-width: 100%;
+}
